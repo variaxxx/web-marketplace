@@ -1,0 +1,54 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("crated_at")
+  updatedAt DateTime @updatedAt() @map("updated_at")
+
+  name  String
+  email String  @unique
+  phone String? @unique
+
+  role   Role
+  status Status
+
+  passwordHash String @map("password_hash")
+
+  refresh_tokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  tokenHash  String  @map("token_hash")
+  deviceName String? @map("device_name")
+
+  revoked Boolean @default(false)
+
+  @@map("refresh_tokens")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Status {
+  INACTIVE
+  ACTIVE
+}
