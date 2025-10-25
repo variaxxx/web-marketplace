@@ -42,111 +42,121 @@ describe("authController (E2E)", () => {
     await app.close();
   });
 
-  it("/auth/login (POST) - should return tokens in cookies", async () => {
-    const mockTokens: TokensResponse = {
-      accessToken: "access123",
-      refreshToken: "refresh123",
-    };
+  describe("/auth/login (POST)", () => {
+    it("should return tokens in cookies", async () => {
+      const mockTokens: TokensResponse = {
+        accessToken: "access123",
+        refreshToken: "refresh123",
+      };
 
-    (clientProxy.send as jest.Mock).mockReturnValue(of(mockTokens));
+      (clientProxy.send as jest.Mock).mockReturnValue(of(mockTokens));
 
-    const res = await request(app.getHttpServer())
-      .post("/auth/login")
-      .send({ email: "test@gmail.com", password: "123123" } as LoginDto)
-      .expect(200);
+      const res = await request(app.getHttpServer())
+        .post("/auth/login")
+        .send({ email: "test@gmail.com", password: "123123" } as LoginDto)
+        .expect(200);
 
-    const cookies = res.headers["set-cookie"];
-    const cookiesArray: string[] = Array.isArray(cookies) ? cookies : [cookies];
+      const cookies = res.headers["set-cookie"];
+      const cookiesArray: string[] = Array.isArray(cookies) ? cookies : [cookies];
 
-    expect(cookies).toBeDefined();
-    expect(cookiesArray.some(cookie => cookie.includes("accessToken"))).toBe(true);
-    expect(cookiesArray.some(cookie => cookie.includes("refreshToken"))).toBe(true);
+      expect(cookies).toBeDefined();
+      expect(cookiesArray.some(cookie => cookie.includes("accessToken"))).toBe(true);
+      expect(cookiesArray.some(cookie => cookie.includes("refreshToken"))).toBe(true);
+    });
   });
 
-  it("/auth/register (POST) - should return access token in cookies", async () => {
-    const mockToken: TokenResponse = {
-      accessToken: "access123",
-    };
+  describe("/auth/register (POST)", () => {
+    it("should return access token in cookies", async () => {
+      const mockToken: TokenResponse = {
+        accessToken: "access123",
+      };
 
-    (clientProxy.send as jest.Mock).mockReturnValue(of(mockToken));
+      (clientProxy.send as jest.Mock).mockReturnValue(of(mockToken));
 
-    const res = await request(app.getHttpServer())
-      .post("/auth/register")
-      .send({ email: "test@gmail.com", name: "Tester", password: "123123" } as RegistrationDto)
-      .expect(201);
+      const res = await request(app.getHttpServer())
+        .post("/auth/register")
+        .send({ email: "test@gmail.com", name: "Tester", password: "123123" } as RegistrationDto)
+        .expect(201);
 
-    const cookies = res.headers["set-cookie"];
-    const cookiesArray: string[] = Array.isArray(cookies) ? cookies : [cookies];
+      const cookies = res.headers["set-cookie"];
+      const cookiesArray: string[] = Array.isArray(cookies) ? cookies : [cookies];
 
-    expect(cookies).toBeDefined();
-    expect(cookiesArray.some(cookie => cookie.includes("accessToken"))).toBe(true);
+      expect(cookies).toBeDefined();
+      expect(cookiesArray.some(cookie => cookie.includes("accessToken"))).toBe(true);
+    });
   });
 
-  it("/auth/refreshToken (POST) - should return tokens in cookies", async () => {
-    const mockTokens: TokensResponse = {
-      accessToken: "access123",
-      refreshToken: "refresh123",
-    };
+  describe("/auth/refreshToken (POST)", () => {
+    it("should return tokens in cookies", async () => {
+      const mockTokens: TokensResponse = {
+        accessToken: "access123",
+        refreshToken: "refresh123",
+      };
 
-    (clientProxy.send as jest.Mock).mockReturnValue(of(mockTokens));
+      (clientProxy.send as jest.Mock).mockReturnValue(of(mockTokens));
 
-    const res = await request(app.getHttpServer())
-      .post("/auth/refreshToken")
-      .set("Cookie", ["refreshToken=oldRefresh"])
-      .expect(200);
+      const res = await request(app.getHttpServer())
+        .post("/auth/refreshToken")
+        .set("Cookie", ["refreshToken=oldRefresh"])
+        .expect(200);
 
-    const cookies = res.headers["set-cookie"];
-    const cookiesArray: string[] = Array.isArray(cookies) ? cookies : [cookies];
+      const cookies = res.headers["set-cookie"];
+      const cookiesArray: string[] = Array.isArray(cookies) ? cookies : [cookies];
 
-    expect(cookies).toBeDefined();
-    expect(cookiesArray.some(cookie => cookie.includes("accessToken"))).toBe(true);
-    expect(cookiesArray.some(cookie => cookie.includes("refreshToken"))).toBe(true);
+      expect(cookies).toBeDefined();
+      expect(cookiesArray.some(cookie => cookie.includes("accessToken"))).toBe(true);
+      expect(cookiesArray.some(cookie => cookie.includes("refreshToken"))).toBe(true);
+    });
+
+    it ("should fail without cookie", async () => {
+      await request(app.getHttpServer())
+        .post("/auth/refreshToken")
+        .expect(400);
+    });
   });
 
-  it ("/auth/refreshToken (POST) - should fail without cookie", async () => {
-    await request(app.getHttpServer())
-      .post("/auth/refreshToken")
-      .expect(400);
+  describe("/auth/verifyEmail (POST)", () => {
+    it("should return tokens in cookies", async () => {
+      const mockTokens: TokensResponse = {
+        accessToken: "access123",
+        refreshToken: "refresh123",
+      };
+
+      (clientProxy.send as jest.Mock).mockReturnValue(of(mockTokens));
+
+      const res = await request(app.getHttpServer())
+        .post("/auth/verifyEmail")
+        .send({ token: "verificationToken" } as VerifyEmailDto)
+        .expect(200);
+
+      const cookies = res.headers["set-cookie"];
+      const cookiesArray: string[] = Array.isArray(cookies) ? cookies : [cookies];
+
+      expect(cookies).toBeDefined();
+      expect(cookiesArray.some(cookie => cookie.includes("accessToken"))).toBe(true);
+      expect(cookiesArray.some(cookie => cookie.includes("refreshToken"))).toBe(true);
+    });
   });
 
-  it("/auth/verifyEmail (POST) - should return tokens in cookies", async () => {
-    const mockTokens: TokensResponse = {
-      accessToken: "access123",
-      refreshToken: "refresh123",
-    };
+  describe("/auth/revokeRefreshToken (POST)", () => {
+    it("should emit event to auth service", async () => {
+      (clientProxy.emit as jest.Mock).mockReturnValue(of(true));
 
-    (clientProxy.send as jest.Mock).mockReturnValue(of(mockTokens));
+      await request(app.getHttpServer())
+        .post("/auth/revokeRefreshToken")
+        .set("Cookie", ["refreshToken=refresh123"])
+        .expect(200);
 
-    const res = await request(app.getHttpServer())
-      .post("/auth/verifyEmail")
-      .send({ token: "verificationToken" } as VerifyEmailDto)
-      .expect(200);
+      expect(clientProxy.emit).toHaveBeenCalledWith(
+        AUTH_PATTERNS.REVOKE_REFRESH_TOKEN,
+        { refreshToken: "refresh123" },
+      );
+    });
 
-    const cookies = res.headers["set-cookie"];
-    const cookiesArray: string[] = Array.isArray(cookies) ? cookies : [cookies];
-
-    expect(cookies).toBeDefined();
-    expect(cookiesArray.some(cookie => cookie.includes("accessToken"))).toBe(true);
-    expect(cookiesArray.some(cookie => cookie.includes("refreshToken"))).toBe(true);
-  });
-
-  it("/auth/revokeRefreshToken (POST) - should emit event to auth service", async () => {
-    (clientProxy.emit as jest.Mock).mockReturnValue(of(true));
-
-    await request(app.getHttpServer())
-      .post("/auth/revokeRefreshToken")
-      .set("Cookie", ["refreshToken=refresh123"])
-      .expect(200);
-
-    expect(clientProxy.emit).toHaveBeenCalledWith(
-      AUTH_PATTERNS.REVOKE_REFRESH_TOKEN,
-      { refreshToken: "refresh123" },
-    );
-  });
-
-  it ("/auth/revokeRefreshToken (POST) - should fail without cookie", async () => {
-    await request(app.getHttpServer())
-      .post("/auth/revokeRefreshToken")
-      .expect(400);
+    it ("should fail without cookie", async () => {
+      await request(app.getHttpServer())
+        .post("/auth/revokeRefreshToken")
+        .expect(400);
+    });
   });
 });
