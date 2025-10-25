@@ -35,10 +35,8 @@ model RefreshToken {
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id])
 
-  tokenHash  String  @map("token_hash")
-  deviceName String? @map("device_name")
-
-  revoked Boolean @default(false)
+  tokenHash String @unique @map("token_hash")
+  device    Json
 
   @@map("refresh_tokens")
 }

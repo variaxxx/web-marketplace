@@ -1,17 +1,12 @@
-import { PrismaService } from "../db/prisma.service";
+import { PrismaJsonObject, PrismaService } from "../db/prisma.service";
 import { EnvKey } from "./app.module";
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
-import { RpcException } from "@nestjs/microservices";
-import { LoginDto, RefreshTokenDto, RegistrationDto, TokenResponseDto, TokensResponseDto } from "@web-marketplace/shared";
+import { ClientProxy, RpcException } from "@nestjs/microservices";
+import { AuthTokenPayload, Device, EmailVerificationTokenPayload, LoginPayload, MAIL_PATTERNS, MicroserviceName, MS_IN_HOUR, RefreshTokenPayload, RegistrationDto, RevokeRefreshTokenPayload, SendEmailVerificationDto, TokenResponse, TokensAges, TokensResponse, VerifyEmailPayload } from "@web-marketplace/shared";
 import * as argon from "argon2";
-
-export interface TokenPayload {
-  userId: string;
-  email: string;
-  role: string;
-}
+import crypto from "node:crypto";
 
 @Injectable()
 export class AppService {
@@ -19,39 +14,56 @@ export class AppService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    @Inject(MicroserviceName.MAIL_SERVICE) private readonly mailClient: ClientProxy,
   ) {}
 
-  async refreshToken(
-    payload: RefreshTokenDto,
-  ): Promise<TokensResponseDto> {
+  async verifyEmail(
+    payload: VerifyEmailPayload,
+  ): Promise<TokensResponse> {
     try {
-      const tokenPayload: TokenPayload = await this.jwtService.verifyAsync(payload.refreshToken, {
-        secret: this.configService.getOrThrow<string>(EnvKey.REFRESH_JWT_SECRET),
+      const tokenPayload: EmailVerificationTokenPayload = await this.jwtService.verifyAsync(payload.token, {
+        secret: this.configService.getOrThrow<string>(EnvKey.EMAIL_VERIFICATION_JWT_SECRET),
       });
 
-      const user = await this.prisma.user.findUnique({
-        where: { id: tokenPayload.userId },
-        select: { refresh_tokens: true },
+      const user = await this.prisma.user.update({
+        where: { id: tokenPayload.userId, email: tokenPayload.email, status: "INACTIVE" },
+        data: { status: "ACTIVE" },
+        select: { role: true },
       });
 
-      let isValidToken: boolean = false;
-      for (const token of user.refresh_tokens) {
-        isValidToken = await argon.verify(token.tokenHash, payload.refreshToken);
-        if (isValidToken)
-          break;
-      }
-      if (!isValidToken) {
+      return await this.createTokens({
+        email: tokenPayload.email,
+        userId: tokenPayload.userId,
+        role: user.role,
+      });
+    } catch {
+      throw new RpcException({
+        status: 401,
+        message: "Invalid token",
+      });
+    }
+  }
+
+  async refreshToken(
+    payload: RefreshTokenPayload,
+  ): Promise<TokensResponse> {
+    try {
+      const tokenPayload = await this.validateRefreshToken(payload.refreshToken);
+
+      if (tokenPayload === null) {
         throw new RpcException({
           status: 401,
           message: "Invalid token",
         });
       }
 
+      await this.revokeRefreshToken(payload);
+
       const tokens = await this.createTokens({
         userId: tokenPayload.userId,
         email: tokenPayload.email,
         role: tokenPayload.role,
-      });
+      }, { device: payload.device });
 
       return tokens;
     } catch {
@@ -63,27 +75,23 @@ export class AppService {
   }
 
   async login(
-    payload: LoginDto,
-  ): Promise<TokensResponseDto> {
+    payload: LoginPayload,
+  ): Promise<TokensResponse> {
     const user = await this.prisma.user.findUnique({
       where: { email: payload.email },
       select: {
         id: true,
-        email: true,
         role: true,
         status: true,
         passwordHash: true,
       },
     });
-    if (!user || user.status === "INACTIVE") {
-      throw new RpcException({
-        status: 401,
-        message: "Invalid credentials",
-      });
-    }
 
-    const isValidPassword = argon.verify(user.passwordHash, payload.password);
-    if (!isValidPassword) {
+    if (
+      !user
+      || user.status === "INACTIVE"
+      || !(await argon.verify(user.passwordHash, payload.password))
+    ) {
       throw new RpcException({
         status: 401,
         message: "Invalid credentials",
@@ -92,21 +100,20 @@ export class AppService {
 
     const tokens = await this.createTokens({
       userId: user.id,
-      email: user.email,
+      email: payload.email,
       role: user.role,
-    });
-    this.writeRefreshToken(user.id, tokens.refreshToken);
+    }, { device: payload.device });
     return tokens;
   }
 
   async register(
     payload: RegistrationDto,
-  ): Promise<TokenResponseDto> {
-    const hashedPassword = await argon.hash(payload.password);
-
+  ): Promise<TokenResponse> {
     try {
+      const hashedPassword = await argon.hash(payload.password);
+
       const user = await this.prisma.user.upsert({
-        where: { email: payload.email, status: "INACTIVE" },
+        where: { email: payload.email, status: "INACTIVE", updatedAt: { lt: new Date(Date.now() - 1 * MS_IN_HOUR) } },
         create: {
           name: payload.name,
           email: payload.email,
@@ -121,61 +128,120 @@ export class AppService {
         },
       });
 
+      const verificationToken = await this.jwtService.signAsync(
+        {
+          userId: user.id,
+          email: payload.email,
+        } as EmailVerificationTokenPayload,
+        {
+          secret: this.configService.getOrThrow<string>(EnvKey.EMAIL_VERIFICATION_JWT_SECRET),
+          expiresIn: TokensAges.emailVerificationToken,
+        },
+      );
+
+      this.mailClient.emit(MAIL_PATTERNS.SEND_EMAIL_VERIFICATION, {
+        recipient: payload.email,
+        token: verificationToken,
+      } as SendEmailVerificationDto);
+
       const tokens = await this.createTokens({
         userId: user.id,
         email: user.email,
         role: user.role,
-      });
+      }, { writeRefreshToken: false });
       return {
         accessToken: tokens.accessToken,
       };
     } catch (e) {
-      if (e.code === "P2025") {
+      if (e.code === "P2002") {
         throw new RpcException({
           status: 400,
           message: "Client already exists",
         });
       }
+      throw e;
     }
+  }
+
+  async revokeRefreshToken(
+    payload: RevokeRefreshTokenPayload,
+  ): Promise<void> {
+    try {
+      const tokenHash = this.hashToken(payload.refreshToken);
+
+      await this.prisma.refreshToken.delete({
+        where: { tokenHash },
+      });
+    } catch {}
   }
 
   private async writeRefreshToken(
     userId: string,
     refreshToken: string,
+    device: Device,
   ): Promise<void> {
-    const hashedToken = await argon.hash(refreshToken);
+    const hashedToken = this.hashToken(refreshToken);
 
     await this.prisma.refreshToken.create({
       data: {
         userId,
         tokenHash: hashedToken,
+        device: device as PrismaJsonObject,
       },
     });
   }
 
-  async createTokens(
-    userData: TokenPayload,
-  ): Promise<TokensResponseDto> {
+  private async validateRefreshToken(
+    refreshToken: string,
+  ): Promise<AuthTokenPayload | null> {
+    const tokenPayload: AuthTokenPayload = await this.jwtService.verifyAsync(refreshToken, {
+      secret: this.configService.getOrThrow<string>(EnvKey.REFRESH_JWT_SECRET),
+    });
+    const tokenHash = this.hashToken(refreshToken);
+    const token = await this.prisma.refreshToken.findUnique({
+      where: { tokenHash },
+      select: { id: true },
+    });
+
+    return token.id ? tokenPayload : null;
+  }
+
+  private async createTokens(
+    userData: AuthTokenPayload,
+    options?: {
+      writeRefreshToken?: boolean;
+      device?: Device;
+    },
+  ): Promise<TokensResponse> {
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(
         userData,
         {
           secret: this.configService.getOrThrow<string>(EnvKey.ACCESS_JWT_SECRET),
-          expiresIn: "15m",
+          expiresIn: TokensAges.accessToken,
         },
       ),
       this.jwtService.signAsync(
         userData,
         {
           secret: this.configService.getOrThrow<string>(EnvKey.REFRESH_JWT_SECRET),
-          expiresIn: "7d",
+          expiresIn: TokensAges.refreshToken,
         },
       ),
     ]);
+
+    if (!options || (options && options.writeRefreshToken !== false))
+      await this.writeRefreshToken(userData.userId, refreshToken, options.device);
 
     return {
       accessToken,
       refreshToken,
     };
+  }
+
+  private hashToken(
+    token: string,
+  ): string {
+    return crypto.createHash("sha256").update(token).digest("hex");
   }
 }

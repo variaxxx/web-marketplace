@@ -1,4 +1,5 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, Logger } from "@nestjs/common";
+import { ApiResponseDto } from "../interceptors/res-format.interceptor";
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from "@nestjs/common";
 
 @Catch()
 export class AllExceptionFilter implements ExceptionFilter {
@@ -13,6 +14,10 @@ export class AllExceptionFilter implements ExceptionFilter {
     const clientIp = request.headers["x-forwarded-for"]?.split(",")[0].trim() || request.ip || "unknown";
 
     Logger.error(`${request.method} ${request.originalUrl} - ${500} Internal server error [IP: ${clientIp}]: ${exception}`);
-    response.status(500).json({ message: "Internal server error" });
+    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message: ["Internal server error"],
+      data: null,
+    } as ApiResponseDto<null>);
   }
 }

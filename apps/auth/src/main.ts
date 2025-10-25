@@ -1,3 +1,4 @@
+import { MicroserviceErrorFilter } from "../../../libs/shared/src";
 import { AppModule } from "./app/app.module";
 import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
@@ -13,6 +14,9 @@ async function bootstrap(): Promise<void> {
       },
     },
   );
+
+  app.useGlobalFilters(new MicroserviceErrorFilter());
+
   await app.listen();
   Logger.log(
     `🚀 Auth service is running...`,

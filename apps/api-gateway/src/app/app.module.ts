@@ -1,9 +1,9 @@
 import { MicroserviceName } from "../../../../libs/shared/src";
 import { AppService } from "./app.service";
 import { AuthController } from "./auth/auth.controller";
+import { MailController } from "./mail/mail.controller";
 import { Module } from "@nestjs/common";
 import { ClientsModule, Transport } from "@nestjs/microservices";
-import { MailController } from "./mail/mail.controller";
 
 @Module({
   imports: [

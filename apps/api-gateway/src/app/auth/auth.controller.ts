@@ -1,8 +1,9 @@
-import { Body, Controller, HttpCode, HttpStatus, Inject, Post, Res } from "@nestjs/common";
+import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Inject, Post, Req, Res } from "@nestjs/common";
 import { ClientProxy, RpcException } from "@nestjs/microservices";
-import { AUTH_PATTERNS, LoginDto, MicroserviceName, MS_IN_DAY, RefreshTokenDto, RegistrationDto, RegistrationResponseDto, TokenResponseDto, TokensResponseDto } from "@web-marketplace/shared";
-import { Response } from "express";
+import { AUTH_PATTERNS, Device, LoginDto, LoginPayload, MicroserviceName, RefreshTokenPayload, RegistrationDto, RevokeRefreshTokenPayload, TokenResponse, TokensAges, TokensResponse, VerifyEmailDto, VerifyEmailPayload } from "@web-marketplace/shared";
+import { Request, Response } from "express";
 import { catchError, firstValueFrom, throwError } from "rxjs";
+import { UAParser } from "ua-parser-js";
 
 @Controller("auth")
 export class AuthController {
@@ -14,55 +15,123 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(
     @Body() dto: LoginDto,
-    @Res() response: Response,
-  ): Promise<TokenResponseDto> {
-    const value: TokensResponseDto = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.LOGIN, dto).pipe(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const ua = req.headers["user-agent"];
+    const device = this.getDeviceFromUa(ua);
+
+    const value: TokensResponse = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.LOGIN, {
+      ...dto,
+      device,
+    } as LoginPayload).pipe(
       catchError(error => throwError(() => new RpcException(error))),
     ));
 
-    response.cookie("refreshToken", value.refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      path: "/",
-      maxAge: 7 * MS_IN_DAY,
-    });
-
-    return {
-      accessToken: value.accessToken,
-    };
+    this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
+    this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
   }
 
   @Post("register")
   @HttpCode(HttpStatus.CREATED)
   async register(
     @Body() dto: RegistrationDto,
-  ): Promise<RegistrationResponseDto> {
-    return await firstValueFrom(this.authClient.send(AUTH_PATTERNS.REGISTER, dto).pipe(
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const value: TokenResponse = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.REGISTER, dto).pipe(
       catchError(error => throwError(() => new RpcException(error))),
     ));
+
+    this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
   }
 
   @Post("refreshToken")
   @HttpCode(HttpStatus.OK)
   async refreshToken(
-    @Body() dto: RefreshTokenDto,
-    @Res() response: Response,
-  ): Promise<TokenResponseDto> {
-    const value: TokensResponseDto = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.REFRESH_TOKEN, dto).pipe(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken)
+      throw new BadRequestException("No refresh token provided");
+
+    const ua = req.headers["user-agent"];
+    const device = this.getDeviceFromUa(ua);
+
+    const value: TokensResponse = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.REFRESH_TOKEN, {
+      refreshToken,
+      device,
+    } as RefreshTokenPayload).pipe(
       catchError(error => throwError(() => new RpcException(error))),
     ));
 
-    response.cookie("refreshToken", value.refreshToken, {
+    this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
+    this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
+  }
+
+  @Post("verifyEmail")
+  @HttpCode(HttpStatus.OK)
+  async verifyEmail(
+    @Body() dto: VerifyEmailDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<void> {
+    const ua = req.headers["user-agent"];
+    const device = this.getDeviceFromUa(ua);
+
+    const value: TokensResponse = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.VERIFY_EMAIL, {
+      ...dto,
+      device,
+    } as VerifyEmailPayload).pipe(
+      catchError(error => throwError(() => new RpcException(error))),
+    ));
+
+    this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
+  }
+
+  @Post("revokeRefreshToken")
+  @HttpCode(HttpStatus.OK)
+  async revokeRefreshToken(
+    @Req() req: Request,
+  ): Promise<void> {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken)
+      throw new BadRequestException("No refresh token provided");
+
+    return await firstValueFrom(this.authClient.emit(AUTH_PATTERNS.REVOKE_REFRESH_TOKEN, {
+      refreshToken,
+    } as RevokeRefreshTokenPayload).pipe(
+      catchError(error => throwError(() => new RpcException(error))),
+    ));
+  }
+
+  private setTokenAsCookie(
+    res: Response,
+    name: string,
+    token: string,
+    maxAge: number,
+  ): void {
+    res.cookie(name, token, {
       httpOnly: true,
       secure: true,
       sameSite: "strict",
       path: "/",
-      maxAge: 7 * MS_IN_DAY,
+      maxAge,
     });
+  }
+
+  private getDeviceFromUa(
+    ua: string,
+  ): Device {
+    const parsedUa = new UAParser(ua);
 
     return {
-      accessToken: value.accessToken,
+      browserName: parsedUa.getBrowser().name,
+      deviceModel: parsedUa.getDevice().model,
+      deviceVendor: parsedUa.getDevice().vendor,
+      engineName: parsedUa.getEngine().name,
+      osName: parsedUa.getOS().name,
     };
   }
 }

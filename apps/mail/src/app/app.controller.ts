@@ -1,18 +1,25 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, UseGuards } from '@nestjs/common';
 import { AppService } from './app.service';
-import { MessagePattern, Payload } from "@nestjs/microservices";
-import { MAIL_PATTERNS } from "@web-marketplace/shared";
+import { EventPattern, MessagePattern, Payload } from "@nestjs/microservices";
+import { MAIL_PATTERNS, RpcAuthGuard, SendEmailVerificationDto } from "@web-marketplace/shared";
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
+  @UseGuards(RpcAuthGuard)
   @MessagePattern(MAIL_PATTERNS.VERIFY)
   async verify(
-    @Payload() payload: any,
+    // @Payload() payload:,
   ): Promise<any> {
-    console.log(payload.id);
-    throw new Error("wtf");
+    // console.log(payload.id);
     return { res: 1 };
+  }
+
+  @EventPattern(MAIL_PATTERNS.SEND_EMAIL_VERIFICATION)
+  async sendVerification(
+    @Payload() payload: SendEmailVerificationDto,
+  ) {
+    return this.appService.sendEmailVerification(payload);
   }
 }

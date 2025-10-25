@@ -1,3 +1,4 @@
+import { ApiResponseDto } from "../interceptors/res-format.interceptor";
 import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Logger } from "@nestjs/common";
 import { RpcException } from "@nestjs/microservices";
 
@@ -14,7 +15,11 @@ export class RpcExceptionFilter implements ExceptionFilter {
     const status = error.status ? error.status : HttpStatus.INTERNAL_SERVER_ERROR;
     const message = error.message ? error.message : "Internal server error";
 
-    Logger.error(`${request.method} ${request.originalUrl} - ${status} ${message} [IP: ${clientIp}]`);
-    response.status(status).json({ message });
+    Logger.error(`${request.method} ${request.originalUrl} - ${status} ${message} [IP: ${clientIp}]: ${exception}`);
+    response.status(status).json({
+      statusCode: status,
+      message: [message],
+      data: null,
+    } as ApiResponseDto<null>);
   }
 }
