@@ -12,3 +12,8 @@ generate tokens like this
 ```
 openssl rand -hex 40
 ```
+
+linting
+```
+npx nx run-many --target=lint --all --fix
+```

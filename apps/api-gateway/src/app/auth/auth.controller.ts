@@ -87,6 +87,7 @@ export class AuthController {
     ));
 
     this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
+    this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
   }
 
   @Post("revokeRefreshToken")
@@ -122,8 +123,11 @@ export class AuthController {
   }
 
   private getDeviceFromUa(
-    ua: string,
+    ua?: string,
   ): Device {
+    if (!ua)
+      return {};
+
     const parsedUa = new UAParser(ua);
 
     return {
