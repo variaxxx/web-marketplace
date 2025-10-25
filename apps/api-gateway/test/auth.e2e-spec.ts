@@ -9,7 +9,7 @@ import cookieParser from "cookie-parser";
 import { of } from "rxjs";
 import request from "supertest";
 
-describe("authController (E2E)", () => {
+describe("Auth (E2E)", () => {
   let app: INestApplication;
   let clientProxy: ClientProxy;
 

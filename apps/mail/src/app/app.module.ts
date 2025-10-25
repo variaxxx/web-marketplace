@@ -1,11 +1,11 @@
-import { Logger, Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { ConfigModule, ConfigService } from "@nestjs/config";
-import Joi from "joi";
+import { AppController } from "./app.controller";
+import { AppService } from "./app.service";
 import { MailerModule } from "@nestjs-modules/mailer";
-import { RpcAuthGuard } from "@web-marketplace/shared";
+import { Module } from "@nestjs/common";
+import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
+import { RpcAuthGuard } from "@web-marketplace/shared";
+import Joi from "joi";
 
 export enum EnvKeys {
   MAIL_HOST = "MAIL_HOST",
@@ -23,7 +23,7 @@ export const validationSchema = Joi.object({
   [EnvKeys.MAIL_PASSWORD]: Joi.string().required(),
   [EnvKeys.MAIL_SENDER]: Joi.string().required(),
   [EnvKeys.CONFIRMATION_PAGE_URL]: Joi.string().required(),
-})
+});
 
 @Module({
   imports: [
@@ -45,8 +45,8 @@ export const validationSchema = Joi.object({
         },
         defaults: {
           from: config.getOrThrow<string>(EnvKeys.MAIL_SENDER),
-        }
-      })
+        },
+      }),
     }),
     JwtModule.register({}),
   ],

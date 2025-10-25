@@ -1,7 +1,7 @@
-import { Test } from '@nestjs/testing';
-import { AppService } from './app.service';
+import { AppService } from "./app.service";
+import { Test } from "@nestjs/testing";
 
-describe('AppService', () => {
+describe("appService", () => {
   let service: AppService;
 
   beforeAll(async () => {
@@ -12,9 +12,9 @@ describe('AppService', () => {
     service = app.get<AppService>(AppService);
   });
 
-  describe('getData', () => {
-    it('should return "Hello API"', () => {
-      expect(service.getData()).toEqual({ message: 'Hello API' });
+  describe("getData", () => {
+    it("should return \"Hello API\"", () => {
+      expect(service.getData()).toEqual({ message: "Hello API" });
     });
   });
 });

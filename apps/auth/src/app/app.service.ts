@@ -20,58 +20,54 @@ export class AppService {
   async verifyEmail(
     payload: VerifyEmailPayload,
   ): Promise<TokensResponse> {
-    try {
-      const tokenPayload: EmailVerificationTokenPayload = await this.jwtService.verifyAsync(payload.token, {
-        secret: this.configService.getOrThrow<string>(EnvKey.EMAIL_VERIFICATION_JWT_SECRET),
-      });
-
-      const user = await this.prisma.user.update({
-        where: { id: tokenPayload.userId, email: tokenPayload.email, status: "INACTIVE" },
-        data: { status: "ACTIVE" },
-        select: { role: true },
-      });
-
-      return await this.createTokens({
-        email: tokenPayload.email,
-        userId: tokenPayload.userId,
-        role: user.role,
-      });
-    } catch {
+    const tokenPayload: EmailVerificationTokenPayload = await this.jwtService.verifyAsync(payload.token, {
+      secret: this.configService.getOrThrow<string>(EnvKey.EMAIL_VERIFICATION_JWT_SECRET),
+    }).catch(() => {
       throw new RpcException({
         status: 401,
         message: "Invalid token",
       });
-    }
+    });
+
+    const user = await this.prisma.user.update({
+      where: { id: tokenPayload.userId, email: tokenPayload.email, status: "INACTIVE" },
+      data: { status: "ACTIVE" },
+      select: { role: true },
+    });
+
+    return await this.createTokens({
+      email: tokenPayload.email,
+      userId: tokenPayload.userId,
+      role: user.role,
+    }, { device: payload.device });
   }
 
   async refreshToken(
     payload: RefreshTokenPayload,
   ): Promise<TokensResponse> {
-    try {
-      const tokenPayload = await this.validateRefreshToken(payload.refreshToken);
+    const tokenPayload = await this.validateRefreshToken(payload.refreshToken).catch(() => {
+      throw new RpcException({
+        status: 401,
+        message: "Invalid token",
+      });
+    });
 
-      if (tokenPayload === null) {
-        throw new RpcException({
-          status: 401,
-          message: "Invalid token",
-        });
-      }
-
-      await this.revokeRefreshToken(payload);
-
-      const tokens = await this.createTokens({
-        userId: tokenPayload.userId,
-        email: tokenPayload.email,
-        role: tokenPayload.role,
-      }, { device: payload.device });
-
-      return tokens;
-    } catch {
+    if (tokenPayload === null) {
       throw new RpcException({
         status: 401,
         message: "Invalid token",
       });
     }
+
+    await this.revokeRefreshToken(payload);
+
+    const tokens = await this.createTokens({
+      userId: tokenPayload.userId,
+      email: tokenPayload.email,
+      role: tokenPayload.role,
+    }, { device: payload.device });
+
+    return tokens;
   }
 
   async login(
@@ -126,6 +122,11 @@ export class AppService {
           passwordHash: hashedPassword,
           role: "USER",
         },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+        },
       });
 
       const verificationToken = await this.jwtService.signAsync(
@@ -171,6 +172,7 @@ export class AppService {
 
       await this.prisma.refreshToken.delete({
         where: { tokenHash },
+        select: { id: true },
       });
     } catch {}
   }
@@ -187,6 +189,9 @@ export class AppService {
         userId,
         tokenHash: hashedToken,
         device: device as PrismaJsonObject,
+      },
+      select: {
+        id: true,
       },
     });
   }

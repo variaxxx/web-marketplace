@@ -1,8 +1,8 @@
-import { MailerService } from "@nestjs-modules/mailer";
-import { Injectable, Logger } from '@nestjs/common';
-import { SendEmailDto, SendEmailVerificationDto } from "../../../../libs/shared/src";
-import { ConfigService } from "@nestjs/config";
+import { SendEmailVerificationDto } from "../../../../libs/shared/src";
 import { EnvKeys } from "./app.module";
+import { MailerService } from "@nestjs-modules/mailer";
+import { Injectable, Logger } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 
 @Injectable()
 export class AppService {
@@ -13,31 +13,29 @@ export class AppService {
     private readonly configService: ConfigService,
   ) {}
 
-  async sendEmail(
-    dto: SendEmailDto
-  ) {
-    try {
-      const result = await this.mailerService.sendMail({
-        from: dto.sender,
-        to: dto.recipients,
-        subject: dto.subject,
-        text: dto.text,
-        html: dto.html,
-      })
+  // async sendEmail(
+  //   dto: SendEmailDto,
+  // ) {
+  //   try {
+  //     const result = await this.mailerService.sendMail({
+  //       from: dto.sender,
+  //       to: dto.recipients,
+  //       subject: dto.subject,
+  //       text: dto.text,
+  //       html: dto.html,
+  //     });
 
-      return result;
-    } catch (e) {
-      throw new Error(`Error while sending email: ${e instanceof Error ? e.stack : e}`);
-    }
-  }
+  //     return result;
+  //   } catch (e) {
+  //     throw new Error(`Error while sending email: ${e instanceof Error ? e.stack : e}`);
+  //   }
+  // }
 
   async sendEmailVerification(
     dto: SendEmailVerificationDto,
   ): Promise<void> {
     try {
-      const link = `${this.configService.getOrThrow<string>(EnvKeys.CONFIRMATION_PAGE_URL)}?token=${dto.token}`
-
-      console.log(this.configService.getOrThrow(EnvKeys.MAIL_PORT), dto.recipient);
+      const link = `${this.configService.getOrThrow<string>(EnvKeys.CONFIRMATION_PAGE_URL)}?token=${dto.token}`;
 
       await this.mailerService.sendMail({
         from: { name: "HR", address: "hr@example.com" },
