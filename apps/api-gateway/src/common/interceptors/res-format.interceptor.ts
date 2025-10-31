@@ -1,15 +1,10 @@
 import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from "@nestjs/common";
+import { ApiResponse } from "@web-marketplace/shared";
 import { map, Observable } from "rxjs";
 
-export interface ApiResponseDto<T> {
-  statusCode: number;
-  message: string[];
-  data: T;
-}
-
 @Injectable()
-export class ResponseFormatInterceptor<T> implements NestInterceptor<T, ApiResponseDto<T>> {
-  intercept(context: ExecutionContext, next: CallHandler<T>): Observable<ApiResponseDto<T>> | Promise<Observable<ApiResponseDto<T>>> {
+export class ResponseFormatInterceptor<T> implements NestInterceptor<T, ApiResponse<T>> {
+  intercept(context: ExecutionContext, next: CallHandler<T>): Observable<ApiResponse<T>> | Promise<Observable<ApiResponse<T>>> {
     return next.handle().pipe(
       map(data => ({
         statusCode: context.switchToHttp().getResponse().statusCode,

@@ -1,7 +1,7 @@
-import { MicroserviceName } from "../../../../../libs/shared/src";
 import { MailController } from "./mail.controller";
 import { ClientProxy } from "@nestjs/microservices";
 import { Test, TestingModule } from "@nestjs/testing";
+import { MicroserviceName } from "@web-marketplace/shared";
 
 function mockResponse() {
   const res: any = {};

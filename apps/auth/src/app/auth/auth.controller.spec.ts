@@ -1,31 +1,32 @@
-import { LoginPayload, RefreshTokenPayload, RegistrationDto, RevokeRefreshTokenPayload, TokenResponse, TokensResponse, VerifyEmailPayload } from "../../../../libs/shared/src";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
+import { AuthController } from "./auth.controller";
+import { AuthService } from "./auth.service";
 import { Test, TestingModule } from "@nestjs/testing";
+import { BecomeSellerPayload, LoginPayload, RefreshTokenPayload, RegistrationDto, RevokeRefreshTokenPayload, TokenResponse, TokensResponse, VerifyEmailPayload } from "@web-marketplace/shared";
 
-describe("appController", () => {
-  let controller: AppController;
-  let service: AppService;
+describe("authController", () => {
+  let controller: AuthController;
+  let service: AuthService;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
+      controllers: [AuthController],
       providers: [
         {
-          provide: AppService,
+          provide: AuthService,
           useValue: {
             login: jest.fn(),
-            register: jest.fn(),
+            registration: jest.fn(),
             refreshToken: jest.fn(),
             verifyEmail: jest.fn(),
             revokeRefreshToken: jest.fn(),
+            becomeSeller: jest.fn(),
           },
         },
       ],
     }).compile();
 
-    controller = module.get<AppController>(AppController);
-    service = module.get<AppService>(AppService);
+    controller = module.get<AuthController>(AuthController);
+    service = module.get<AuthService>(AuthService);
   });
 
   describe("login", () => {
@@ -62,11 +63,11 @@ describe("appController", () => {
         accessToken: "accessToken",
       } as TokenResponse;
 
-      (service.register as jest.Mock).mockResolvedValue(token);
+      (service.registration as jest.Mock).mockResolvedValue(token);
 
-      const res = await controller.register(payload);
+      const res = await controller.registration(payload);
 
-      expect(service.register).toHaveBeenCalledWith(payload);
+      expect(service.registration).toHaveBeenCalledWith(payload);
       expect(res).toEqual(token);
     });
   });
@@ -126,6 +127,20 @@ describe("appController", () => {
       await controller.revokeRefreshToken(payload);
 
       expect(service.revokeRefreshToken).toHaveBeenCalledWith(payload);
+    });
+  });
+
+  describe("becomeSeller", () => {
+    it("should call service", async () => {
+      const payload = {
+        userId: "123",
+      } as BecomeSellerPayload;
+
+      (service.becomeSeller as jest.Mock).mockResolvedValue(undefined);
+
+      await controller.becomeSeller(payload);
+
+      expect(service.becomeSeller).toHaveBeenCalledWith(payload);
     });
   });
 });

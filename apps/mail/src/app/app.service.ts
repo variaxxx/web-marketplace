@@ -1,8 +1,8 @@
-import { SendEmailVerificationDto } from "../../../../libs/shared/src";
-import { EnvKeys } from "./app.module";
+import { EnvKey } from "./app.module";
 import { MailerService } from "@nestjs-modules/mailer";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { SendEmailVerificationDto } from "@web-marketplace/shared";
 
 @Injectable()
 export class AppService {
@@ -35,7 +35,9 @@ export class AppService {
     dto: SendEmailVerificationDto,
   ): Promise<void> {
     try {
-      const link = `${this.configService.getOrThrow<string>(EnvKeys.CONFIRMATION_PAGE_URL)}?token=${dto.token}`;
+      const link = `${this.configService.getOrThrow<string>(EnvKey.CONFIRMATION_PAGE_URL)}?token=${dto.token}`;
+
+      Logger.debug(`Email verification token: ${dto.token}`);
 
       await this.mailerService.sendMail({
         from: { name: "HR", address: "hr@example.com" },

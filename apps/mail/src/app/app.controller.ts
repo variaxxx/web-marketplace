@@ -5,7 +5,9 @@ import { MAIL_PATTERNS, SendEmailVerificationDto } from "@web-marketplace/shared
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+  ) {}
 
   @EventPattern(MAIL_PATTERNS.SEND_EMAIL_VERIFICATION)
   async sendVerification(

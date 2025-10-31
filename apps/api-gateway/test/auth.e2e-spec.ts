@@ -1,10 +1,10 @@
-import { AUTH_PATTERNS, LoginDto, MicroserviceName, RegistrationDto, TokenResponse, TokensResponse, VerifyEmailDto } from "../../../libs/shared/src";
 import { AuthController } from "../src/app/auth/auth.controller";
 import { AllExceptionFilter } from "../src/common/filters/all-exception.filter";
 import { RpcExceptionFilter } from "../src/common/filters/rpc.filter";
 import { INestApplication } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { Test, TestingModule } from "@nestjs/testing";
+import { AUTH_PATTERNS, LoginDto, MicroserviceName, RegistrationDto, TokenResponse, TokensResponse, VerifyEmailDto } from "@web-marketplace/shared";
 import cookieParser from "cookie-parser";
 import { of } from "rxjs";
 import request from "supertest";
@@ -65,7 +65,7 @@ describe("Auth (E2E)", () => {
     });
   });
 
-  describe("/auth/register (POST)", () => {
+  describe("/auth/registration (POST)", () => {
     it("should return access token in cookies", async () => {
       const mockToken: TokenResponse = {
         accessToken: "access123",
@@ -74,7 +74,7 @@ describe("Auth (E2E)", () => {
       (clientProxy.send as jest.Mock).mockReturnValue(of(mockToken));
 
       const res = await request(app.getHttpServer())
-        .post("/auth/register")
+        .post("/auth/registration")
         .send({ email: "test@gmail.com", name: "Tester", password: "123123" } as RegistrationDto)
         .expect(201);
 

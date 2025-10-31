@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
-import { Prisma, PrismaClient } from "@prisma/generated/client";
+import { Prisma, PrismaClient } from "@prisma/generated/authClient";
 
 export type PrismaJsonObject = Prisma.JsonObject;
 

@@ -1,11 +1,11 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../../../node_modules/@prisma/generated/client"
+  output   = "../../../node_modules/@prisma/generated/authClient"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = env("AUTH_DATABASE_URL")
 }
 
 model User {
@@ -14,9 +14,7 @@ model User {
   createdAt DateTime @default(now()) @map("crated_at")
   updatedAt DateTime @updatedAt() @map("updated_at")
 
-  name  String
-  email String  @unique
-  phone String? @unique
+  email String @unique
 
   role   Role
   status Status
@@ -44,6 +42,7 @@ model RefreshToken {
 enum Role {
   USER
   ADMIN
+  SELLER
 }
 
 enum Status {

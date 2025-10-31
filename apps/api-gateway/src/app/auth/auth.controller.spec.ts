@@ -1,8 +1,8 @@
-import { MicroserviceName, TokensResponse } from "../../../../../libs/shared/src";
 import { AuthController } from "./auth.controller";
 import { BadRequestException } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { Test, TestingModule } from "@nestjs/testing";
+import { MicroserviceName, TokensResponse } from "@web-marketplace/shared";
 import { of, throwError } from "rxjs";
 
 function mockResponse() {

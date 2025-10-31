@@ -1,21 +1,33 @@
-import { PrismaJsonObject, PrismaService } from "../db/prisma.service";
-import { EnvKey } from "./app.module";
+import { PrismaJsonObject, PrismaService } from "../../db/prisma.service";
+import { EnvKey } from "../app.module";
 import { Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { ClientProxy, RpcException } from "@nestjs/microservices";
-import { AuthTokenPayload, Device, EmailVerificationTokenPayload, LoginPayload, MAIL_PATTERNS, MicroserviceName, MS_IN_HOUR, RefreshTokenPayload, RegistrationDto, RevokeRefreshTokenPayload, SendEmailVerificationDto, TokenResponse, TokensAges, TokensResponse, VerifyEmailPayload } from "@web-marketplace/shared";
+import { AuthTokenPayload, BecomeSellerPayload, CreateUserPayload, Device, EmailVerificationTokenPayload, LoginPayload, MAIL_PATTERNS, MicroserviceName, MS_IN_HOUR, RefreshTokenPayload, RegistrationDto, RevokeRefreshTokenPayload, SendEmailVerificationDto, TokenResponse, TokensAges, TokensResponse, USER_PATTERNS, VerifyEmailPayload } from "@web-marketplace/shared";
 import * as argon from "argon2";
 import crypto from "node:crypto";
 
 @Injectable()
-export class AppService {
+export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     @Inject(MicroserviceName.MAIL_SERVICE) private readonly mailClient: ClientProxy,
+    @Inject(MicroserviceName.USER_SERVICE) private readonly userClient: ClientProxy,
   ) {}
+
+  async becomeSeller(
+    payload: BecomeSellerPayload,
+  ): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: payload.userId, status: "ACTIVE" },
+      data: {
+        role: "SELLER",
+      },
+    });
+  }
 
   async verifyEmail(
     payload: VerifyEmailPayload,
@@ -32,8 +44,23 @@ export class AppService {
     const user = await this.prisma.user.update({
       where: { id: tokenPayload.userId, email: tokenPayload.email, status: "INACTIVE" },
       data: { status: "ACTIVE" },
-      select: { role: true },
+      select: {
+        id: true,
+        role: true,
+      },
+    }).catch((e) => {
+      if (e.code === "P2025") {
+        throw new RpcException({
+          status: 400,
+          message: "Email already verified",
+        });
+      }
+      throw e;
     });
+
+    this.userClient.emit(USER_PATTERNS.CREATE_USER, {
+      id: user.id,
+    } as CreateUserPayload);
 
     return await this.createTokens({
       email: tokenPayload.email,
@@ -102,7 +129,7 @@ export class AppService {
     return tokens;
   }
 
-  async register(
+  async registration(
     payload: RegistrationDto,
   ): Promise<TokenResponse> {
     try {
@@ -111,14 +138,12 @@ export class AppService {
       const user = await this.prisma.user.upsert({
         where: { email: payload.email, status: "INACTIVE", updatedAt: { lt: new Date(Date.now() - 1 * MS_IN_HOUR) } },
         create: {
-          name: payload.name,
           email: payload.email,
           passwordHash: hashedPassword,
           role: "USER",
           status: "INACTIVE",
         },
         update: {
-          name: payload.name,
           passwordHash: hashedPassword,
           role: "USER",
         },

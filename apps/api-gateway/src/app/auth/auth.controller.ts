@@ -32,13 +32,13 @@ export class AuthController {
     this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
   }
 
-  @Post("register")
+  @Post("registration")
   @HttpCode(HttpStatus.CREATED)
-  async register(
+  async registration(
     @Body() dto: RegistrationDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    const value: TokenResponse = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.REGISTER, dto).pipe(
+    const value: TokenResponse = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.REGISTRATION, dto).pipe(
       catchError(error => throwError(() => new RpcException(error))),
     ));
 
@@ -100,11 +100,9 @@ export class AuthController {
     if (!refreshToken)
       throw new BadRequestException("No refresh token provided");
 
-    return await firstValueFrom(this.authClient.emit(AUTH_PATTERNS.REVOKE_REFRESH_TOKEN, {
+    return void this.authClient.emit(AUTH_PATTERNS.REVOKE_REFRESH_TOKEN, {
       refreshToken,
-    } as RevokeRefreshTokenPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    } as RevokeRefreshTokenPayload);
   }
 
   private setTokenAsCookie(

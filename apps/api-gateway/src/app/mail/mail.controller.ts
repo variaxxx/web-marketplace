@@ -1,6 +1,6 @@
-import { MicroserviceName } from "../../../../../libs/shared/src";
 import { Controller, Inject } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
+import { MicroserviceName } from "@web-marketplace/shared";
 
 @Controller("mail")
 export class MailController {

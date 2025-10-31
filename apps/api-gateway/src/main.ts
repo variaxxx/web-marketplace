@@ -3,7 +3,7 @@ import { AllExceptionFilter } from "./common/filters/all-exception.filter";
 import { RpcExceptionFilter } from "./common/filters/rpc.filter";
 import { LoggerInterceptor } from "./common/interceptors/logger.interceptor";
 import { ResponseFormatInterceptor } from "./common/interceptors/res-format.interceptor";
-import { Logger, ValidationPipe } from "@nestjs/common";
+import { BadRequestException, Logger, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import cookieParser from "cookie-parser";
 
@@ -15,6 +15,7 @@ async function bootstrap(): Promise<void> {
       transform: true,
       whitelist: true,
       forbidNonWhitelisted: true,
+      exceptionFactory: (): BadRequestException => new BadRequestException("Validation failed"),
     },
   ));
   app.useGlobalFilters(

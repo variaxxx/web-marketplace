@@ -1,42 +1,28 @@
-import { MicroserviceName } from "../../../../libs/shared/src";
-import { PrismaModule } from "../db/prisma.module";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
+import { AuthModule } from "./auth/auth.module";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
-import { ClientsModule, Transport } from "@nestjs/microservices";
 import Joi from "joi";
 
 export enum EnvKey {
   ACCESS_JWT_SECRET = "ACCESS_JWT_SECRET",
   REFRESH_JWT_SECRET = "REFRESH_JWT_SECRET",
   EMAIL_VERIFICATION_JWT_SECRET = "EMAIL_VERIFICATION_JWT_SECRET",
+  RMQ_URL = "RMQ_URL",
 }
 
 export const validationSchema = Joi.object({
   [EnvKey.ACCESS_JWT_SECRET]: Joi.string().required(),
   [EnvKey.REFRESH_JWT_SECRET]: Joi.string().required(),
   [EnvKey.EMAIL_VERIFICATION_JWT_SECRET]: Joi.string().required(),
+  [EnvKey.RMQ_URL]: Joi.string().required(),
 });
 
 @Module({
   imports: [
-    PrismaModule,
-    JwtModule.register({}),
-    ConfigModule.forRoot({ validationSchema }),
-    ClientsModule.register([
-      {
-        name: MicroserviceName.MAIL_SERVICE,
-        transport: Transport.TCP,
-        options: {
-          host: "localhost",
-          port: 3002,
-        },
-      },
-    ]),
+    JwtModule.register({ global: true }),
+    ConfigModule.forRoot({ validationSchema, isGlobal: true }),
+    AuthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
 })
 export class AppModule {}

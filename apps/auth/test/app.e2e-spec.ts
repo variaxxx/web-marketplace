@@ -1,9 +1,9 @@
-import { AUTH_PATTERNS, TokensResponse } from "../../../libs/shared/src";
 import { AppModule } from "../src/app/app.module";
-import { AppService } from "../src/app/app.service";
+import { AuthService } from "../src/app/auth/auth.service";
 import { INestMicroservice } from "@nestjs/common";
 import { ClientProxy, ClientProxyFactory, MicroserviceOptions, Transport } from "@nestjs/microservices";
 import { Test, TestingModule } from "@nestjs/testing";
+import { AUTH_PATTERNS, Device, LoginPayload, RefreshTokenPayload, RegistrationPayload, RevokeRefreshTokenPayload, TokensResponse, VerifyEmailPayload } from "@web-marketplace/shared";
 import { firstValueFrom } from "rxjs";
 
 const mockTokens: TokensResponse = {
@@ -19,10 +19,10 @@ describe("Auth Microservice (E2E)", () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     })
-      .overrideProvider(AppService)
+      .overrideProvider(AuthService)
       .useValue({
         login: jest.fn().mockResolvedValue(mockTokens),
-        register: jest.fn().mockResolvedValue({ accessToken: mockTokens.accessToken }),
+        registration: jest.fn().mockResolvedValue({ accessToken: mockTokens.accessToken }),
         refreshToken: jest.fn().mockResolvedValue(mockTokens),
         verifyEmail: jest.fn().mockResolvedValue(mockTokens),
         revokeRefreshToken: jest.fn(),
@@ -46,6 +46,10 @@ describe("Auth Microservice (E2E)", () => {
     await client.connect();
   });
 
+  const mockDevice: Device = {
+    browserName: "Mozilla",
+  };
+
   afterAll(async () => {
     await app.close();
     await client.close();
@@ -55,22 +59,22 @@ describe("Auth Microservice (E2E)", () => {
   });
 
   it("LOGIN", async () => {
-    const payload = { email: "test@mail.com", password: "123" };
+    const payload: LoginPayload = { email: "test@mail.com", password: "123", device: mockDevice };
 
     const result = await firstValueFrom(client.send(AUTH_PATTERNS.LOGIN, payload));
     expect(result).toHaveProperty("accessToken");
     expect(result).toHaveProperty("refreshToken");
   });
 
-  it("REGISTER", async () => {
-    const payload = { email: "test@mail.com", password: "123", name: "Test" };
+  it("REGISTRATION", async () => {
+    const payload: RegistrationPayload = { email: "test@mail.com", password: "123" };
 
-    const result = await firstValueFrom(client.send(AUTH_PATTERNS.REGISTER, payload));
+    const result = await firstValueFrom(client.send(AUTH_PATTERNS.REGISTRATION, payload));
     expect(result).toHaveProperty("accessToken");
   });
 
   it("REFRESH TOKEN", async () => {
-    const payload = { refreshToken: "some-token" };
+    const payload: RefreshTokenPayload = { refreshToken: "some-token", device: mockDevice };
 
     const result = await firstValueFrom(client.send(AUTH_PATTERNS.REFRESH_TOKEN, payload));
     expect(result).toHaveProperty("accessToken");
@@ -78,14 +82,14 @@ describe("Auth Microservice (E2E)", () => {
   });
 
   it("VERIFY EMAIL", async () => {
-    const payload = { email: "test@mail.com", code: "12345" };
+    const payload: VerifyEmailPayload = { token: "some-token", device: mockDevice };
 
     const result = await firstValueFrom(client.send(AUTH_PATTERNS.VERIFY_EMAIL, payload));
     expect(result).toHaveProperty("accessToken");
   });
 
   it("REVOKE REFRESH TOKEN", async () => {
-    const payload = { refreshToken: "some-token" };
+    const payload: RevokeRefreshTokenPayload = { refreshToken: "some-token" };
     await firstValueFrom(client.emit(AUTH_PATTERNS.REVOKE_REFRESH_TOKEN, payload));
   });
 });

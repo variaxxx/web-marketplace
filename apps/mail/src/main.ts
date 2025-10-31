@@ -2,15 +2,19 @@ import { AppModule } from "./app/app.module";
 import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { MicroserviceOptions, Transport } from "@nestjs/microservices";
-import { MicroserviceErrorFilter } from "@web-marketplace/shared";
+import { MicroserviceErrorFilter, MicroserviceRMQQueue } from "@web-marketplace/shared";
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
     AppModule,
     {
-      transport: Transport.TCP,
+      transport: Transport.RMQ,
       options: {
-        port: 3002,
+        urls: [process.env.RMQ_URL],
+        queue: MicroserviceRMQQueue.MAIL_SERVICE,
+        queueOptions: {
+          durable: true,
+        },
       },
     },
   );

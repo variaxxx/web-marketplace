@@ -1,10 +1,10 @@
-import { PrismaService } from "../db/prisma.service";
-import { AppService } from "./app.service";
+import { PrismaService } from "../../db/prisma.service";
+import { AuthService } from "./auth.service";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { ClientProxy, RpcException } from "@nestjs/microservices";
 import { Test, TestingModule } from "@nestjs/testing";
-import { AuthTokenPayload, Device, EmailVerificationTokenPayload, MAIL_PATTERNS, MicroserviceName, SendEmailVerificationDto } from "@web-marketplace/shared";
+import { AuthTokenPayload, CreateUserPayload, Device, EmailVerificationTokenPayload, MAIL_PATTERNS, MicroserviceName, SendEmailVerificationDto, USER_PATTERNS } from "@web-marketplace/shared";
 import * as argon from "argon2";
 
 const mockDevice: Device = {
@@ -16,16 +16,17 @@ jest.mock("argon2", () => ({
   hash: jest.fn(),
 }));
 
-describe("appService", () => {
-  let service: AppService;
+describe("authService", () => {
+  let service: AuthService;
   let prisma: PrismaService;
   let jwt: JwtService;
   let mailClient: ClientProxy;
+  let userClient: ClientProxy;
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        AppService,
+        AuthService,
         {
           provide: PrismaService,
           useValue: {
@@ -60,13 +61,20 @@ describe("appService", () => {
             emit: jest.fn(),
           },
         },
+        {
+          provide: MicroserviceName.USER_SERVICE,
+          useValue: {
+            emit: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
-    service = module.get<AppService>(AppService);
+    service = module.get<AuthService>(AuthService);
     prisma = module.get<PrismaService>(PrismaService);
     jwt = module.get<JwtService>(JwtService);
     mailClient = module.get<ClientProxy>(MicroserviceName.MAIL_SERVICE);
+    userClient = module.get<ClientProxy>(MicroserviceName.USER_SERVICE);
   });
 
   beforeEach(() => {
@@ -80,6 +88,7 @@ describe("appService", () => {
         userId: "123",
       } as EmailVerificationTokenPayload);
       (prisma.user.update as jest.Mock).mockResolvedValue({
+        id: "123",
         role: "USER",
       });
 
@@ -95,6 +104,9 @@ describe("appService", () => {
       expect(jwt.verifyAsync).toHaveBeenCalledWith("token", expect.any(Object));
       expect(prisma.user.update).toHaveBeenCalled();
       expect(prisma.refreshToken.create).toHaveBeenCalled();
+      expect(userClient.emit).toHaveBeenCalledWith(USER_PATTERNS.CREATE_USER, {
+        id: "123",
+      } as CreateUserPayload);
     });
 
     it("should throw RpcException if invalid token", async () => {
@@ -194,7 +206,7 @@ describe("appService", () => {
     });
   });
 
-  describe("register", () => {
+  describe("registration", () => {
     it("should create a user, emit email verification and return token", async () => {
       (argon.hash as jest.Mock).mockResolvedValue("hash");
       (prisma.user.upsert as jest.Mock).mockResolvedValue({
@@ -208,9 +220,8 @@ describe("appService", () => {
         id: "123",
       });
 
-      const res = await service.register({
+      const res = await service.registration({
         email: "test@gmail.com",
-        name: "Tester",
         password: "123123",
       });
 
@@ -229,9 +240,8 @@ describe("appService", () => {
       (prisma.user.upsert as jest.Mock).mockRejectedValue({ code: "P2002" });
 
       await expect(
-        service.register({
+        service.registration({
           email: "test@gmail.com",
-          name: "Tester",
           password: "123123",
         }),
       ).rejects.toThrow(RpcException);
@@ -249,6 +259,20 @@ describe("appService", () => {
       });
 
       expect(prisma.refreshToken.delete).toHaveBeenCalled();
+    });
+  });
+
+  describe("becomeSeller", () => {
+    it("should update user", async () => {
+      (prisma.user.update as jest.Mock).mockResolvedValue({
+        id: "123",
+      });
+
+      await service.becomeSeller({
+        userId: "123",
+      });
+
+      expect(prisma.user.update).toHaveBeenCalled();
     });
   });
 });

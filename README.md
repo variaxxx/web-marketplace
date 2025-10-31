@@ -17,3 +17,8 @@ linting
 ```
 npx nx run-many --target=lint --all --fix
 ```
+
+app creating
+```
+npx nx g @nx/nest:app apps/my-nest-app
+```

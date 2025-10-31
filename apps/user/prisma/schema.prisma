@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/generated/userClient"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("USER_DATABASE_URL")
+}
+
+model User {
+  id String @id
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt() @map("updated_at")
+
+  phone     String?
+  name      String?
+  avatarUrl String?
+
+  wishlist  WishlistItem[]
+  addresses Address[]
+  Store     Store[]
+
+  @@map("users")
+}
+
+model Store {
+  ownerId String @id
+
+  name        String
+  description String
+
+  owner User @relation(fields: [ownerId], references: [id])
+
+  @@map("stores")
+}
+
+model WishlistItem {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  productId String
+  userId    String @map("user_id")
+  user      User   @relation(fields: [userId], references: [id])
+
+  @@map("wishlist_items")
+}
+
+model Address {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id])
+
+  label     String?
+  city      String
+  street    String
+  house     String
+  latitude  Decimal
+  longitude Decimal
+
+  @@map("addresses")
+}
+
+model SellerApplication {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  userId String                  @map("user_id")
+  status SellerApplicationStatus @default(PENDING)
+  note   String?
+
+  storeName        String
+  storeDescription String
+
+  @@map("seller_applications")
+}
+
+enum SellerApplicationStatus {
+  PENDING
+  SUCCESS
+  DECLINED
+  CANCELLED
+}

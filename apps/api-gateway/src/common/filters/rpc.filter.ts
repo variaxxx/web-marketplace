@@ -1,6 +1,6 @@
-import { ApiResponseDto } from "../interceptors/res-format.interceptor";
 import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Logger } from "@nestjs/common";
 import { RpcException } from "@nestjs/microservices";
+import { ApiResponse } from "@web-marketplace/shared";
 
 @Catch(RpcException)
 export class RpcExceptionFilter implements ExceptionFilter {
@@ -20,6 +20,6 @@ export class RpcExceptionFilter implements ExceptionFilter {
       statusCode: status,
       message: [message],
       data: null,
-    } as ApiResponseDto<null>);
+    } as ApiResponse<null>);
   }
 }
