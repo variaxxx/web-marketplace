@@ -1,7 +1,7 @@
 import { MinioModule } from "../../db/minio.module";
 import { PrismaModule } from "../../db/prisma.module";
-import { UserController } from "./user.controller";
-import { UserService } from "./user.service";
+import { StoreController } from "./store.controller";
+import { StoreService } from "./store.service";
 import { Module } from "@nestjs/common";
 
 @Module({
@@ -9,7 +9,7 @@ import { Module } from "@nestjs/common";
     PrismaModule,
     MinioModule,
   ],
-  controllers: [UserController],
-  providers: [UserService],
+  controllers: [StoreController],
+  providers: [StoreService],
 })
-export class UserModule {};
+export class StoreModule {};

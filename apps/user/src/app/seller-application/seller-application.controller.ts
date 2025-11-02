@@ -1,7 +1,7 @@
 import { SellerApplicationService } from "./seller-application.service";
-import { Controller, UseGuards } from "@nestjs/common";
+import { Controller } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
-import { ApproveSellerApplicationPayload, AuthTokenPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, JwtPayload, RpcAllowedRoles, RpcAuthGuard, SellerApplicationResponse, USER_PATTERNS, UserRole } from "@web-marketplace/shared";
+import { ApproveSellerApplicationPayload, AuthTokenPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, JwtPayload, RpcAllowedRoles, SellerApplicationResponse, USER_PATTERNS, UserRole } from "@web-marketplace/shared";
 
 @Controller()
 export class SellerApplicationController {
@@ -10,7 +10,6 @@ export class SellerApplicationController {
   ) {}
 
   @RpcAllowedRoles(UserRole.USER, UserRole.SELLER)
-  @UseGuards(RpcAuthGuard)
   @MessagePattern(USER_PATTERNS.CREATE_SELLER_APPLICATION)
   async create(
     @Payload() payload: CreateSellerApplicationPayload,
@@ -20,7 +19,6 @@ export class SellerApplicationController {
   }
 
   @RpcAllowedRoles(UserRole.ADMIN)
-  @UseGuards(RpcAuthGuard)
   @MessagePattern(USER_PATTERNS.APPROVE_SELLER_APPLICATION)
   async approve(
     @Payload() payload: ApproveSellerApplicationPayload,
@@ -29,7 +27,6 @@ export class SellerApplicationController {
   }
 
   @RpcAllowedRoles(UserRole.ADMIN)
-  @UseGuards(RpcAuthGuard)
   @MessagePattern(USER_PATTERNS.DECLINE_SELLER_APPLICATION)
   async decline(
     @Payload() payload: DeclineSellerApplicationPayload,
@@ -38,7 +35,6 @@ export class SellerApplicationController {
   }
 
   @RpcAllowedRoles(UserRole.USER)
-  @UseGuards(RpcAuthGuard)
   @MessagePattern(USER_PATTERNS.CANCEL_SELLER_APPLICATION)
   async cancel(
     @Payload() payload: CancelSellerApplicationPayload,
@@ -47,8 +43,6 @@ export class SellerApplicationController {
     return await this.sellerApplicationService.cancel(payload, jwtPayload);
   }
 
-  @RpcAllowedRoles(UserRole.USER, UserRole.SELLER, UserRole.ADMIN)
-  @UseGuards(RpcAuthGuard)
   @MessagePattern(USER_PATTERNS.FIND_ONE_SELLER_APPLICATION)
   async findOne(
     @Payload() payload: FindOneSellerApplicationPayload,
@@ -57,8 +51,6 @@ export class SellerApplicationController {
     return await this.sellerApplicationService.findOne(payload, jwtPayload);
   }
 
-  @RpcAllowedRoles(UserRole.USER, UserRole.SELLER, UserRole.ADMIN)
-  @UseGuards(RpcAuthGuard)
   @MessagePattern(USER_PATTERNS.FIND_MANY_SELLER_APPLICATION)
   async findMany(
     @Payload() payload: FindManySellerApplicationsPayload,

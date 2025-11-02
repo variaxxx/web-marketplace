@@ -1,47 +1,80 @@
+import { AssetsModule } from "../assets/assets.module";
 import { AuthController } from "./auth/auth.controller";
 import { MailController } from "./mail/mail.controller";
 import { SellerApplicationController } from "./seller-application/seller-application.controller";
+import { StoreController } from "./store/store.controller";
+import { UserController } from "./user/user.controller";
 import { Module } from "@nestjs/common";
-import { ClientsModule, Transport } from "@nestjs/microservices";
+import { ConfigModule, ConfigService } from "@nestjs/config";
+import { ClientProvider, ClientsModule, Transport } from "@nestjs/microservices";
 import { MicroserviceName, MicroserviceRMQQueue } from "@web-marketplace/shared";
+import Joi from "joi";
 
-export const RMQ_URL = "amqp://guest:123123@localhost:5672";
+export enum EnvKey {
+  RMQ_URL = "RMQ_URL",
+  MINIO_ENDPOINT = "MINIO_ENDPOINT",
+  MINIO_PORT = "MINIO_PORT",
+  MINIO_ACCESS_KEY = "MINIO_ACCESS_KEY",
+  MINIO_SECRET_KEY = "MINIO_SECRET_KEY",
+}
+
+export const validationSchema = Joi.object({
+  [EnvKey.RMQ_URL]: Joi.string().required(),
+  [EnvKey.MINIO_ENDPOINT]: Joi.string(),
+  [EnvKey.MINIO_PORT]: Joi.number().required(),
+  [EnvKey.MINIO_ACCESS_KEY]: Joi.string().required(),
+  [EnvKey.MINIO_SECRET_KEY]: Joi.string().required(),
+});
 
 @Module({
   imports: [
-    ClientsModule.register([
+    AssetsModule,
+    ConfigModule.forRoot({ validationSchema, isGlobal: true }),
+    ClientsModule.registerAsync([
       {
         name: MicroserviceName.AUTH_SERVICE,
-        transport: Transport.RMQ,
-        options: {
-          urls: [RMQ_URL],
-          queue: MicroserviceRMQQueue.AUTH_SERVICE,
-          queueOptions: {
-            durable: true,
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService): Promise<ClientProvider> | ClientProvider => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [config.getOrThrow<string>(EnvKey.RMQ_URL)],
+            queue: MicroserviceRMQQueue.AUTH_SERVICE,
+            queueOptions: {
+              durable: true,
+            },
           },
-        },
+        }),
       },
       {
         name: MicroserviceName.MAIL_SERVICE,
-        transport: Transport.RMQ,
-        options: {
-          urls: [RMQ_URL],
-          queue: MicroserviceRMQQueue.MAIL_SERVICE,
-          queueOptions: {
-            durable: true,
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService): Promise<ClientProvider> | ClientProvider => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [config.getOrThrow<string>(EnvKey.RMQ_URL)],
+            queue: MicroserviceRMQQueue.MAIL_SERVICE,
+            queueOptions: {
+              durable: true,
+            },
           },
-        },
+        }),
       },
       {
         name: MicroserviceName.USER_SERVICE,
-        transport: Transport.RMQ,
-        options: {
-          urls: [RMQ_URL],
-          queue: MicroserviceRMQQueue.USER_SERVICE,
-          queueOptions: {
-            durable: true,
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService): Promise<ClientProvider> | ClientProvider => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [config.getOrThrow<string>(EnvKey.RMQ_URL)],
+            queue: MicroserviceRMQQueue.USER_SERVICE,
+            queueOptions: {
+              durable: true,
+            },
           },
-        },
+        }),
       },
     ]),
   ],
@@ -49,7 +82,8 @@ export const RMQ_URL = "amqp://guest:123123@localhost:5672";
     AuthController,
     MailController,
     SellerApplicationController,
+    UserController,
+    StoreController,
   ],
-  providers: [],
 })
 export class AppModule {}

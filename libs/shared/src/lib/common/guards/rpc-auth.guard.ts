@@ -1,3 +1,4 @@
+import { IS_PUBLIC_KEY } from "../decorators/is-public.decorator";
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Reflector } from "@nestjs/core";
@@ -17,13 +18,17 @@ export class RpcAuthGuard implements CanActivate {
     const rpcCtx = context.switchToRpc();
     const token = rpcCtx.getData().accessToken;
     const meta = rpcCtx.getContext();
-    const allowedRoles = this.reflector.get<UserRole[]>(ROLES_KEY, context.getHandler()) || [];
+    const allowedRoles = this.reflector.get<UserRole[]>(ROLES_KEY, context.getHandler()) || Object.values(UserRole);
+    const isPublic = this.reflector.get<boolean>(IS_PUBLIC_KEY, context.getHandler()) || false;
 
     if (!token) {
-      throw new RpcException({
-        status: 401,
-        message: "Unauthorized",
-      });
+      if (!isPublic) {
+        throw new RpcException({
+          status: 401,
+          message: "Unauthorized",
+        });
+      }
+      return true;
     }
 
     const tokenPayload: AuthTokenPayload = await this.jwtService.verifyAsync(token, {
@@ -35,7 +40,7 @@ export class RpcAuthGuard implements CanActivate {
       });
     });
 
-    if (!allowedRoles.includes(tokenPayload.role as UserRole)) {
+    if (!isPublic && !allowedRoles.includes(tokenPayload.role as UserRole)) {
       throw new RpcException({
         status: 403,
         message: "Forbidden",

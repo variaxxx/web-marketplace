@@ -6,4 +6,12 @@ export enum USER_PATTERNS {
   DECLINE_SELLER_APPLICATION = "user.decline-seller-application",
   FIND_ONE_SELLER_APPLICATION = "user.find-one-seller-application",
   FIND_MANY_SELLER_APPLICATION = "user.find-many-seller-application",
+  GET_USER_INFO = "user.get-user-info",
+  GET_ME = "user.get-me",
+  EDIT_USER_INFO = "user.edit-user-info",
+  SET_PROFILE_PICTURE = "user.set-profile-picture",
+  GET_STORE_INFO = "user.get-store-info",
+  GET_MY_STORE = "user.get-my-store",
+  SET_STORE_PICTURE = "user.set-store-picture",
+  TEST = "test",
 }

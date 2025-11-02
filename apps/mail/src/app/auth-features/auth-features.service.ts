@@ -1,11 +1,11 @@
-import { EnvKey } from "./app.module";
+import { EnvKey } from "../app.module";
 import { MailerService } from "@nestjs-modules/mailer";
 import { Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { SendEmailVerificationDto } from "@web-marketplace/shared";
 
 @Injectable()
-export class AppService {
+export class AuthFeaturesService {
   private readonly logger = new Logger();
 
   constructor(

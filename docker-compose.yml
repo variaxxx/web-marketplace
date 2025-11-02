@@ -5,8 +5,26 @@ services:
       - "5672:5672"
       - "15672:15672"
     environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=123123
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+
+  minio:
+    image: minio/minio:latest
+    volumes:
+      - ./s3/data:/data
+    ports:
+      - ${MINIO_PORT}:9000
+      - ${MINIO_PANEL_PORT}:9001
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_USE_SSL: false
+    command: server --console-address ":9001" /data/
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 30s
+      timeout: 20s
+      retries: 3
 
   auth-db:
     image: postgres
@@ -42,3 +60,8 @@ services:
 
 networks:
   usersdomain:
+  minio-network:
+
+volumes:
+  minio-data:
+    driver: local

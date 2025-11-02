@@ -31,7 +31,7 @@ model RefreshToken {
   createdAt DateTime @default(now()) @map("created_at")
 
   userId String @map("user_id")
-  user   User   @relation(fields: [userId], references: [id])
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   tokenHash String @unique @map("token_hash")
   device    Json

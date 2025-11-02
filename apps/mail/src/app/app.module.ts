@@ -1,8 +1,8 @@
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
+import { AuthFeaturesModule } from "./auth-features/auth-features.module";
 import { MailerModule } from "@nestjs-modules/mailer";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
+import { APP_GUARD } from "@nestjs/core";
 import { JwtModule } from "@nestjs/jwt";
 import { RpcAuthGuard } from "@web-marketplace/shared";
 import Joi from "joi";
@@ -31,7 +31,7 @@ export const validationSchema = Joi.object({
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ validationSchema }),
+    ConfigModule.forRoot({ validationSchema, isGlobal: true }),
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -50,12 +50,14 @@ export const validationSchema = Joi.object({
         },
       }),
     }),
-    JwtModule.register({}),
+    JwtModule.register({ global: true }),
+    AuthFeaturesModule,
   ],
-  controllers: [AppController],
   providers: [
-    AppService,
-    RpcAuthGuard,
+    {
+      provide: APP_GUARD,
+      useClass: RpcAuthGuard,
+    },
   ],
 })
 export class AppModule {}
