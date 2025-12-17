@@ -85,9 +85,7 @@ export class SellerApplicationController {
 
     return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.FIND_MANY, {
       accessToken,
-      count: dto.count,
-      lastId: dto.lastId,
-      status: dto.status,
+      ...dto,
     } as FindManySellerApplicationsPayload).pipe(
       catchError(error => throwError(() => new RpcException(error))),
     ));

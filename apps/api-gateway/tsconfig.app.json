@@ -5,7 +5,7 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "module": "commonjs",
-    "types": ["node"],
+    "types": ["node", "multer"],
     "outDir": "../../dist/out-tsc"
   },
   "include": ["src/**/*.ts"],

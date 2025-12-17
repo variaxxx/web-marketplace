@@ -1,10 +1,8 @@
 import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Patch, Post, Req, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { ClientProxy, RpcException } from "@nestjs/microservices";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { AddAddressDto, AddAddressPayload, AddressResponse, DeleteAddressPayload, EditAddressDto, EditAddressPayload, EditUserInfoDto, EditUserInfoPayload, FindManyAddressesDto, FindManyAddressesPayload, FindOneAddressPayload, GetMePayload, GetUserInfoPayload, MicroserviceName, SetProfilePicturePayload, USER_PATTERNS, UserInfoResponse } from "@web-marketplace/shared";
+import { AddAddressDto, AddAddressPayload, AddressResponse, DeleteAddressPayload, EditAddressDto, EditAddressPayload, EditUserInfoDto, EditUserInfoPayload, FindManyAddressesDto, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, GetMePayload, GetUserInfoPayload, MicroserviceName, SetProfilePicturePayload, USER_PATTERNS, UserInfoResponse } from "@web-marketplace/shared";
 import { Request } from "express";
-// eslint-disable-next-line unused-imports/no-unused-imports
-import { Multer } from "multer";
 import { extname } from "node:path";
 import { catchError, firstValueFrom, throwError } from "rxjs";
 
@@ -144,7 +142,7 @@ export class UserController {
   async findManyAddresses(
     @Body() dto: FindManyAddressesDto,
     @Req() req: Request,
-  ): Promise<AddressResponse> {
+  ): Promise<FindManyApiResponse<AddressResponse>> {
     const accessToken = req.cookies.accessToken;
 
     return await firstValueFrom(this.userClient.send(USER_PATTERNS.ADDRESS.FIND_MANY, {

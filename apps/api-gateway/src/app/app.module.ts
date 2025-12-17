@@ -1,6 +1,5 @@
 import { AssetsModule } from "../assets/assets.module";
 import { AuthController } from "./auth/auth.controller";
-import { MailController } from "./mail/mail.controller";
 import { SellerApplicationController } from "./seller-application/seller-application.controller";
 import { StoreController } from "./store/store.controller";
 import { UserController } from "./user/user.controller";
@@ -80,7 +79,6 @@ export const validationSchema = Joi.object({
   ],
   controllers: [
     AuthController,
-    MailController,
     SellerApplicationController,
     UserController,
     StoreController,
