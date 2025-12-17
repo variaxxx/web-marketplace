@@ -10,7 +10,7 @@ export class SellerApplicationController {
   ) {}
 
   @RpcAllowedRoles(UserRole.USER, UserRole.SELLER)
-  @MessagePattern(USER_PATTERNS.CREATE_SELLER_APPLICATION)
+  @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.CREATE)
   async create(
     @Payload() payload: CreateSellerApplicationPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
@@ -19,7 +19,7 @@ export class SellerApplicationController {
   }
 
   @RpcAllowedRoles(UserRole.ADMIN)
-  @MessagePattern(USER_PATTERNS.APPROVE_SELLER_APPLICATION)
+  @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.APPROVE)
   async approve(
     @Payload() payload: ApproveSellerApplicationPayload,
   ): Promise<SellerApplicationResponse> {
@@ -27,7 +27,7 @@ export class SellerApplicationController {
   }
 
   @RpcAllowedRoles(UserRole.ADMIN)
-  @MessagePattern(USER_PATTERNS.DECLINE_SELLER_APPLICATION)
+  @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.DECLINE)
   async decline(
     @Payload() payload: DeclineSellerApplicationPayload,
   ): Promise<SellerApplicationResponse> {
@@ -35,7 +35,7 @@ export class SellerApplicationController {
   }
 
   @RpcAllowedRoles(UserRole.USER)
-  @MessagePattern(USER_PATTERNS.CANCEL_SELLER_APPLICATION)
+  @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.CANCEL)
   async cancel(
     @Payload() payload: CancelSellerApplicationPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
@@ -43,7 +43,7 @@ export class SellerApplicationController {
     return await this.sellerApplicationService.cancel(payload, jwtPayload);
   }
 
-  @MessagePattern(USER_PATTERNS.FIND_ONE_SELLER_APPLICATION)
+  @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.FIND_ONE)
   async findOne(
     @Payload() payload: FindOneSellerApplicationPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
@@ -51,7 +51,7 @@ export class SellerApplicationController {
     return await this.sellerApplicationService.findOne(payload, jwtPayload);
   }
 
-  @MessagePattern(USER_PATTERNS.FIND_MANY_SELLER_APPLICATION)
+  @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.FIND_MANY)
   async findMany(
     @Payload() payload: FindManySellerApplicationsPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,

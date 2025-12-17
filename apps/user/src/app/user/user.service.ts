@@ -116,6 +116,20 @@ export class UserService implements OnModuleInit {
     payload: SetProfilePicturePayload,
     jwtPayload: AuthTokenPayload,
   ): Promise<UserInfoResponse> {
+    const oldUser = await this.prisma.user.findUnique({
+      where: { id: jwtPayload.userId },
+      select: { avatarId: true },
+    });
+
+    if (!oldUser) {
+      throw new RpcException({
+        status: 404,
+        message: "User not found",
+      });
+    }
+
+    if (oldUser.avatarId)
+      await this.removeFile(oldUser.avatarId);
     const filename = await this.uploadFile(
       Buffer.from(payload.image),
     );
@@ -123,14 +137,6 @@ export class UserService implements OnModuleInit {
     const user = await this.prisma.user.update({
       where: { id: jwtPayload.userId },
       data: { avatarId: filename },
-    }).catch((e) => {
-      if (e.code === "P2025") {
-        throw new RpcException({
-          status: 404,
-          message: "User not found",
-        });
-      }
-      throw e;
     });
 
     return {
@@ -159,5 +165,12 @@ export class UserService implements OnModuleInit {
       undefined,
     );
     return filename;
+  }
+
+  private async removeFile(filename: string): Promise<void> {
+    await this.minio.removeObject(
+      this.bucketName,
+      filename,
+    );
   }
 }

@@ -10,7 +10,7 @@ export class StoreController {
   ) {}
 
   @IsPublic()
-  @MessagePattern(USER_PATTERNS.GET_STORE_INFO)
+  @MessagePattern(USER_PATTERNS.STORE.GET_INFO)
   async getInfo(
     @Payload() payload: GetStoreInfoPayload,
   ): Promise<StoreInfoResponse> {
@@ -18,7 +18,7 @@ export class StoreController {
   }
 
   @RpcAllowedRoles(UserRole.SELLER)
-  @MessagePattern(USER_PATTERNS.GET_MY_STORE)
+  @MessagePattern(USER_PATTERNS.STORE.GET_MY)
   async getMyStore(
     @Payload() payload: GetMyStorePayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
@@ -29,7 +29,7 @@ export class StoreController {
   }
 
   @RpcAllowedRoles(UserRole.SELLER)
-  @MessagePattern(USER_PATTERNS.SET_STORE_PICTURE)
+  @MessagePattern(USER_PATTERNS.STORE.SET_STORE_PICTURE)
   async setStorePicture(
     @Payload() payload: SetStorePicturePayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,

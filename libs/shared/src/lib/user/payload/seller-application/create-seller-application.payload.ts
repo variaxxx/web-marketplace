@@ -1,4 +1,4 @@
-import { WithTokenPayload } from "../../with-token.payload";
+import { WithTokenPayload } from "../../../with-token.payload";
 import { IsString, MaxLength, MinLength } from "class-validator";
 
 export class CreateSellerApplicationPayload extends WithTokenPayload {

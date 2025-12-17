@@ -10,7 +10,7 @@ export class UserController {
   ) {}
 
   @IsPublic()
-  @EventPattern(USER_PATTERNS.CREATE_USER)
+  @EventPattern(USER_PATTERNS.USER.CREATE)
   async create(
     @Payload() payload: CreateUserPayload,
   ): Promise<void> {
@@ -18,7 +18,7 @@ export class UserController {
   }
 
   @IsPublic()
-  @MessagePattern(USER_PATTERNS.GET_USER_INFO)
+  @MessagePattern(USER_PATTERNS.USER.GET_INFO)
   async getInfo(
     @Payload() payload: GetUserInfoPayload,
     @JwtPayload() jwtPayload?: AuthTokenPayload,
@@ -26,7 +26,7 @@ export class UserController {
     return await this.userService.getInfo(payload, jwtPayload);
   }
 
-  @MessagePattern(USER_PATTERNS.GET_ME)
+  @MessagePattern(USER_PATTERNS.USER.GET_ME)
   async getMe(
     @Payload() payload: GetMePayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
@@ -34,7 +34,7 @@ export class UserController {
     return await this.userService.getInfo({ accessToken: payload.accessToken, userId: jwtPayload.userId }, jwtPayload);
   }
 
-  @MessagePattern(USER_PATTERNS.EDIT_USER_INFO)
+  @MessagePattern(USER_PATTERNS.USER.EDIT_INFO)
   async editInfo(
     @Payload() payload: EditUserInfoPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
@@ -42,7 +42,7 @@ export class UserController {
     return await this.userService.editInfo(payload, jwtPayload);
   }
 
-  @MessagePattern(USER_PATTERNS.SET_PROFILE_PICTURE)
+  @MessagePattern(USER_PATTERNS.USER.SET_PROFILE_PICTURE)
   async setPfp(
     @Payload() payload: SetProfilePicturePayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,

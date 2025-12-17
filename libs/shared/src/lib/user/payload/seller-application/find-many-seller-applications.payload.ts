@@ -1,5 +1,5 @@
-import { WithTokenPayload } from "../../with-token.payload";
-import { SellerApplicationStatus } from "../user.types";
+import { WithTokenPayload } from "../../../with-token.payload";
+import { SellerApplicationStatus } from "../../user.types";
 import { IsIn, IsInt, IsOptional, IsPositive, IsUUID } from "class-validator";
 
 export class FindManySellerApplicationsPayload extends WithTokenPayload {

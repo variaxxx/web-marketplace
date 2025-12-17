@@ -18,7 +18,7 @@ export class SellerApplicationController {
   ): Promise<SellerApplicationResponse> {
     const accessToken = req.cookies.accessToken;
 
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.CREATE_SELLER_APPLICATION, {
+    return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.CREATE, {
       accessToken,
       storeName: dto.storeName,
       storeDescription: dto.storeDescription,
@@ -35,7 +35,7 @@ export class SellerApplicationController {
   ): Promise<SellerApplicationResponse> {
     const accessToken = req.cookies.accessToken;
 
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.CANCEL_SELLER_APPLICATION, {
+    return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.CANCEL, {
       accessToken,
       applicationId: id,
     } as CancelSellerApplicationPayload).pipe(
@@ -51,7 +51,7 @@ export class SellerApplicationController {
   ): Promise<SellerApplicationResponse> {
     const accessToken = req.cookies.accessToken;
 
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.DECLINE_SELLER_APPLICATION, {
+    return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.DECLINE, {
       accessToken,
       applicationId: id,
     } as DeclineSellerApplicationPayload).pipe(
@@ -67,7 +67,7 @@ export class SellerApplicationController {
   ): Promise<SellerApplicationResponse> {
     const accessToken = req.cookies.accessToken;
 
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.APPROVE_SELLER_APPLICATION, {
+    return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.APPROVE, {
       accessToken,
       applicationId: id,
     } as ApproveSellerApplicationPayload).pipe(
@@ -83,7 +83,7 @@ export class SellerApplicationController {
   ): Promise<FindManyApiResponse<SellerApplicationResponse>> {
     const accessToken = req.cookies.accessToken;
 
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.FIND_MANY_SELLER_APPLICATION, {
+    return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.FIND_MANY, {
       accessToken,
       count: dto.count,
       lastId: dto.lastId,
@@ -101,7 +101,7 @@ export class SellerApplicationController {
   ): Promise<SellerApplicationResponse> {
     const accessToken = req.cookies.accessToken;
 
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.FIND_ONE_SELLER_APPLICATION, {
+    return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.FIND_ONE, {
       accessToken,
       applicationId: id,
     } as FindOneSellerApplicationPayload).pipe(

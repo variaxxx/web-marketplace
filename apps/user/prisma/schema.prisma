@@ -53,6 +53,7 @@ model Address {
   id String @id @default(uuid())
 
   createdAt DateTime @default(now()) @map("created_at")
+  isDeleted Boolean  @default(false) @map("is_deleted")
 
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id])

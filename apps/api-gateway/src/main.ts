@@ -5,6 +5,7 @@ import { LoggerInterceptor } from "./common/interceptors/logger.interceptor";
 import { ResponseFormatInterceptor } from "./common/interceptors/res-format.interceptor";
 import { BadRequestException, Logger, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
 
 async function bootstrap(): Promise<void> {
@@ -27,6 +28,13 @@ async function bootstrap(): Promise<void> {
     new LoggerInterceptor(),
   );
   app.use(cookieParser());
+
+  const swaggerCfg = new DocumentBuilder()
+    .setTitle("web-marketplace")
+    .build();
+
+  const swaggerDocFactory = (): any => SwaggerModule.createDocument(app, swaggerCfg);
+  SwaggerModule.setup("swagger", app, swaggerDocFactory);
 
   const port = process.env.PORT || 3000;
   await app.listen(port);

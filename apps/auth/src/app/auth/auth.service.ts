@@ -58,7 +58,7 @@ export class AuthService {
       throw e;
     });
 
-    this.userClient.emit(USER_PATTERNS.CREATE_USER, {
+    this.userClient.emit(USER_PATTERNS.USER.CREATE, {
       id: user.id,
     } as CreateUserPayload);
 

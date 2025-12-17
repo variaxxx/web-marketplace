@@ -50,10 +50,6 @@ export class StoreService {
     payload: SetStorePicturePayload,
     jwtPayload: AuthTokenPayload,
   ): Promise<StoreInfoResponse> {
-    const filename = await this.uploadFile(
-      Buffer.from(payload.image),
-    );
-
     if (jwtPayload.role !== UserRole.SELLER) {
       throw new RpcException({
         status: 403,
@@ -61,17 +57,27 @@ export class StoreService {
       });
     }
 
+    const oldStore = await this.prisma.store.findUnique({
+      where: { ownerId: jwtPayload.userId },
+      select: { avatarId: true },
+    });
+
+    if (!oldStore) {
+      throw new RpcException({
+        status: 404,
+        message: "Store not found",
+      });
+    }
+
+    if (oldStore.avatarId)
+      await this.removeFile(oldStore.avatarId);
+    const filename = await this.uploadFile(
+      Buffer.from(payload.image),
+    );
+
     const store = await this.prisma.store.update({
       where: { ownerId: jwtPayload.userId },
       data: { avatarId: filename },
-    }).catch((e) => {
-      if (e.code === "P2025") {
-        throw new RpcException({
-          status: 404,
-          message: "Store not found",
-        });
-      }
-      throw e;
     });
 
     return {
@@ -101,5 +107,12 @@ export class StoreService {
       undefined,
     );
     return filename;
+  }
+
+  private async removeFile(filename: string): Promise<void> {
+    await this.minio.removeObject(
+      this.bucketName,
+      filename,
+    );
   }
 }

@@ -49,7 +49,7 @@ describe("sellerApplicationController", () => {
     const res = await controller.create(dto, mockRequest);
 
     expect(res).toEqual(response);
-    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.CREATE_SELLER_APPLICATION, {
+    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.SELLER_APPLICATION.CREATE, {
       accessToken: "access123",
       storeName: "Name",
       storeDescription: "Description",
@@ -67,7 +67,7 @@ describe("sellerApplicationController", () => {
     const res = await controller.cancel("123", mockRequest);
 
     expect(res).toEqual(response);
-    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.CANCEL_SELLER_APPLICATION, {
+    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.SELLER_APPLICATION.CANCEL, {
       accessToken: "access123",
       applicationId: "123",
     });
@@ -84,7 +84,7 @@ describe("sellerApplicationController", () => {
     const res = await controller.decline("123", mockRequest);
 
     expect(res).toEqual(response);
-    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.DECLINE_SELLER_APPLICATION, {
+    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.SELLER_APPLICATION.DECLINE, {
       accessToken: "access123",
       applicationId: "123",
     });
@@ -101,7 +101,7 @@ describe("sellerApplicationController", () => {
     const res = await controller.approve("123", mockRequest);
 
     expect(res).toEqual(response);
-    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.APPROVE_SELLER_APPLICATION, {
+    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.SELLER_APPLICATION.APPROVE, {
       accessToken: "access123",
       applicationId: "123",
     });
@@ -123,7 +123,7 @@ describe("sellerApplicationController", () => {
     const res = await controller.findMany(dto, mockRequest);
 
     expect(res).toEqual(response);
-    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.FIND_MANY_SELLER_APPLICATION, {
+    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.SELLER_APPLICATION.FIND_MANY, {
       accessToken: "access123",
       count: 10,
       lastId: "0",
@@ -142,7 +142,7 @@ describe("sellerApplicationController", () => {
     const res = await controller.findOne("123", mockRequest);
 
     expect(res).toEqual(response);
-    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.FIND_ONE_SELLER_APPLICATION, {
+    expect(clientProxy.send).toHaveBeenCalledWith(USER_PATTERNS.SELLER_APPLICATION.FIND_ONE, {
       accessToken: "access123",
       applicationId: "123",
     });

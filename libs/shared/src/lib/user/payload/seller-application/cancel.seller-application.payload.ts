@@ -1,4 +1,4 @@
-import { WithTokenPayload } from "../../with-token.payload";
+import { WithTokenPayload } from "../../../with-token.payload";
 import { IsUUID } from "class-validator";
 
 export class CancelSellerApplicationPayload extends WithTokenPayload {
