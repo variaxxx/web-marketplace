@@ -27,7 +27,7 @@ services:
       retries: 3
 
   auth-db:
-    image: postgres
+    image: postgres:17
     restart: unless-stopped
     environment:
       - POSTGRES_USER=postgres
@@ -43,7 +43,7 @@ services:
       - "5433:5432"
 
   user-db:
-    image: postgres
+    image: postgres:17
     restart: unless-stopped
     environment:
       - POSTGRES_USER=postgres
@@ -57,6 +57,34 @@ services:
       retries: 3
     ports:
       - "5434:5432"
+
+  product-db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - usersdomain
+    healthcheck:
+      test: ["CMD-SHELL", "su -c 'pg_isready -U postgres' postgres"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    ports:
+      - "5435:5432"
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.2.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - 9200:9200
 
 networks:
   usersdomain:

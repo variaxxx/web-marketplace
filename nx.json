@@ -37,13 +37,7 @@
       "plugin": "@nx/jest/plugin",
       "options": {
         "targetName": "test"
-      },
-      "exclude": [
-        "apps/api-gateway-e2e/**/*",
-        "apps/auth-e2e/**/*",
-        "apps/mail-e2e/**/*",
-        "apps/user-e2e/**/*"
-      ]
+      }
     }
   ]
 }

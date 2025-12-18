@@ -1,5 +1,6 @@
 import { AssetsModule } from "../assets/assets.module";
 import { AuthController } from "./auth/auth.controller";
+import { ProductController } from "./product/product.controller";
 import { SellerApplicationController } from "./seller-application/seller-application.controller";
 import { StoreController } from "./store/store.controller";
 import { UserController } from "./user/user.controller";
@@ -75,6 +76,21 @@ export const validationSchema = Joi.object({
           },
         }),
       },
+      {
+        name: MicroserviceName.PRODUCT_SERVICE,
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService): Promise<ClientProvider> | ClientProvider => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: [config.getOrThrow<string>(EnvKey.RMQ_URL)],
+            queue: MicroserviceRMQQueue.PRODUCT_SERVICE,
+            queueOptions: {
+              durable: true,
+            },
+          },
+        }),
+      },
     ]),
   ],
   controllers: [
@@ -82,6 +98,7 @@ export const validationSchema = Joi.object({
     SellerApplicationController,
     UserController,
     StoreController,
+    ProductController,
   ],
 })
 export class AppModule {}

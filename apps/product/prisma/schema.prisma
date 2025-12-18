@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/generated/productClient"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PRODUCT_DATABASE_URL")
+}
+
+model Product {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt() @map("updated_at")
+
+  sellerId String @map("seller_id")
+
+  name        String
+  description String
+  category    String
+  priceCents  Int           @map("price_cents")
+  status      ProductStatus
+
+  @@map("products")
+}
+
+enum ProductStatus {
+  REMOVED
+  ON_SALE
+  SOLD
+}

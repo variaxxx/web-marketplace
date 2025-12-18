@@ -104,7 +104,7 @@ describe("authService", () => {
       expect(jwt.verifyAsync).toHaveBeenCalledWith("token", expect.any(Object));
       expect(prisma.user.update).toHaveBeenCalled();
       expect(prisma.refreshToken.create).toHaveBeenCalled();
-      expect(userClient.emit).toHaveBeenCalledWith(USER_PATTERNS.CREATE_USER, {
+      expect(userClient.emit).toHaveBeenCalledWith(USER_PATTERNS.USER.CREATE, {
         id: "123",
       } as CreateUserPayload);
     });

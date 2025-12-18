@@ -1,3 +1,4 @@
+import { AddressModule } from "./address/address.module";
 import { SellerApplicationModule } from "./seller-application/seller-application.module";
 import { StoreModule } from "./store/store.module";
 import { UserModule } from "./user/user.module";
@@ -7,7 +8,6 @@ import { APP_GUARD } from "@nestjs/core";
 import { JwtModule } from "@nestjs/jwt";
 import { RpcAuthGuard } from "@web-marketplace/shared";
 import Joi from "joi";
-import { AddressModule } from "./address/address.module";
 
 export enum EnvKey {
   ACCESS_JWT_SECRET = "ACCESS_JWT_SECRET",
