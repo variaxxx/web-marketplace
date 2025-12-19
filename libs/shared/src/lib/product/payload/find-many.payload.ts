@@ -6,11 +6,13 @@ export class FindManyProductsPayload {
 
   @IsInt()
   @IsPositive()
-  limit!: number;
+  @IsOptional()
+  limit?: number;
 
   @IsInt()
   @IsPositive()
-  offset!: number;
+  @IsOptional()
+  offset?: number;
 
   @IsUUID()
   @IsOptional()

@@ -1,15 +1,17 @@
+import { BaseRpcController } from "../base-rpc.controller";
 import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Inject, Post, Req, Res } from "@nestjs/common";
-import { ClientProxy, RpcException } from "@nestjs/microservices";
+import { ClientProxy } from "@nestjs/microservices";
 import { AUTH_PATTERNS, Device, LoginDto, LoginPayload, MicroserviceName, RefreshTokenPayload, RegistrationDto, RevokeRefreshTokenPayload, TokenResponse, TokensAges, TokensResponse, VerifyEmailDto, VerifyEmailPayload } from "@web-marketplace/shared";
 import { Request, Response } from "express";
-import { catchError, firstValueFrom, throwError } from "rxjs";
 import { UAParser } from "ua-parser-js";
 
 @Controller("auth")
-export class AuthController {
+export class AuthController extends BaseRpcController {
   constructor(
     @Inject(MicroserviceName.AUTH_SERVICE) private readonly authClient: ClientProxy,
-  ) {}
+  ) {
+    super();
+  }
 
   @Post("login")
   @HttpCode(HttpStatus.OK)
@@ -21,12 +23,14 @@ export class AuthController {
     const ua = req.headers["user-agent"];
     const device = this.getDeviceFromUa(ua);
 
-    const value: TokensResponse = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.LOGIN, {
-      ...dto,
-      device,
-    } as LoginPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    const value = await this.send<LoginPayload, TokensResponse>(
+      this.authClient,
+      AUTH_PATTERNS.LOGIN,
+      {
+        ...dto,
+        device,
+      },
+    );
 
     this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
     this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
@@ -38,9 +42,11 @@ export class AuthController {
     @Body() dto: RegistrationDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
-    const value: TokenResponse = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.REGISTRATION, dto).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    const value = await this.send<RegistrationDto, TokenResponse>(
+      this.authClient,
+      AUTH_PATTERNS.REGISTRATION,
+      dto,
+    );
 
     this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
   }
@@ -58,12 +64,14 @@ export class AuthController {
     const ua = req.headers["user-agent"];
     const device = this.getDeviceFromUa(ua);
 
-    const value: TokensResponse = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.REFRESH_TOKEN, {
-      refreshToken,
-      device,
-    } as RefreshTokenPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    const value = await this.send<RefreshTokenPayload, TokensResponse>(
+      this.authClient,
+      AUTH_PATTERNS.REFRESH_TOKEN,
+      {
+        refreshToken,
+        device,
+      },
+    );
 
     this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
     this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
@@ -79,12 +87,14 @@ export class AuthController {
     const ua = req.headers["user-agent"];
     const device = this.getDeviceFromUa(ua);
 
-    const value: TokensResponse = await firstValueFrom(this.authClient.send(AUTH_PATTERNS.VERIFY_EMAIL, {
-      ...dto,
-      device,
-    } as VerifyEmailPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    const value = await this.send<VerifyEmailPayload, TokensResponse>(
+      this.authClient,
+      AUTH_PATTERNS.VERIFY_EMAIL,
+      {
+        ...dto,
+        device,
+      },
+    );
 
     this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
     this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
@@ -100,9 +110,11 @@ export class AuthController {
     if (!refreshToken)
       throw new BadRequestException("No refresh token provided");
 
-    return void this.authClient.emit(AUTH_PATTERNS.REVOKE_REFRESH_TOKEN, {
-      refreshToken,
-    } as RevokeRefreshTokenPayload);
+    return void this.emit<RevokeRefreshTokenPayload>(
+      this.authClient,
+      AUTH_PATTERNS.REVOKE_REFRESH_TOKEN,
+      { refreshToken },
+    );
   }
 
   private setTokenAsCookie(

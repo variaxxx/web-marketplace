@@ -1,5 +1,5 @@
-import { ProductStatus } from "../product.types";
-import { IsDate, IsIn, IsInt, IsPositive, IsString, IsUUID } from "class-validator";
+import { PRODUCT_STATUS, ProductStatus } from "../product.types";
+import { IsArray, IsDate, IsIn, IsInt, IsPositive, IsString, IsUUID } from "class-validator";
 
 export class ProductInfoResponse {
   @IsUUID()
@@ -20,7 +20,7 @@ export class ProductInfoResponse {
   @IsString()
   description!: string;
 
-  @IsIn(Object.values(ProductStatus))
+  @IsIn(Object.values(PRODUCT_STATUS))
   status!: ProductStatus;
 
   @IsInt()
@@ -29,4 +29,7 @@ export class ProductInfoResponse {
 
   @IsString()
   category!: string;
+
+  @IsArray()
+  pictureUrls!: string[];
 }

@@ -16,17 +16,39 @@ model Product {
 
   sellerId String @map("seller_id")
 
-  name        String
-  description String
-  category    String
-  priceCents  Int           @map("price_cents")
-  status      ProductStatus
+  name            String
+  description     String
+  category        String
+  priceCents      Int              @map("price_cents")
+  status          ProductStatus
+  productPictures ProductPicture[]
 
+  @@index([sellerId])
+  @@index([category])
+  @@index([status])
   @@map("products")
+}
+
+model ProductPicture {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  url       String
+  productId String  @map("product_id")
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  sizeBytes Int     @map("size_bytes")
+  mimeType  String
+  isMain    Boolean @default(false) @map("is_main")
+  order     Int     @default(0)
+
+  @@map("product_pictures")
 }
 
 enum ProductStatus {
   REMOVED
+  HIDDEN
   ON_SALE
   SOLD
 }

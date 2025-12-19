@@ -1,14 +1,16 @@
-import { BadRequestException, Body, Controller, Get, Inject, Post, Query, Req } from "@nestjs/common";
-import { ClientProxy, RpcException } from "@nestjs/microservices";
-import { CreateProductDto, CreateProductPayload, FindManyApiResponse, MicroserviceName, PRODUCT_PATTERNS, ProductInfoResponse, ProductSearchPayload } from "@web-marketplace/shared";
-import { Request } from "express";
-import { catchError, firstValueFrom, throwError } from "rxjs";
+import { AccessToken } from "../../common/decorators/access-token.decorator";
+import { BaseRpcController } from "../base-rpc.controller";
+import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Patch, Post, Query } from "@nestjs/common";
+import { ClientProxy } from "@nestjs/microservices";
+import { CreateProductDto, CreateProductPayload, DeleteProductPayload, EditProductDto, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, HideProductPayload, MicroserviceName, PRODUCT_PATTERNS, ProductInfoResponse, ProductSearchPayload } from "@web-marketplace/shared";
 
 @Controller("product")
-export class ProductController {
+export class ProductController extends BaseRpcController {
   constructor(
     @Inject(MicroserviceName.PRODUCT_SERVICE) private readonly productClient: ClientProxy,
-  ) {}
+  ) {
+    super();
+  }
 
   @Get("search")
   async search(
@@ -19,34 +21,121 @@ export class ProductController {
     @Query("minPrice") minPrice?: number,
     @Query("maxPrice") maxPrice?: number,
   ): Promise<FindManyApiResponse<ProductInfoResponse>> {
-    if (!query) {
+    if (!query)
       throw new BadRequestException("No query provided");
-    }
 
-    return await firstValueFrom(this.productClient.send(PRODUCT_PATTERNS.SEARCH, {
-      query,
-      limit,
-      offset,
-      category,
-      minPrice,
-      maxPrice,
-    } as ProductSearchPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    return await this.send<ProductSearchPayload, FindManyApiResponse<ProductInfoResponse>>(
+      this.productClient,
+      PRODUCT_PATTERNS.SEARCH,
+      { query, limit, category, maxPrice, minPrice, offset },
+    );
   }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   async create(
     @Body() dto: CreateProductDto,
-    @Req() req: Request,
+    @AccessToken() accessToken: string,
   ): Promise<ProductInfoResponse> {
-    const accessToken = req.cookies.accessToken;
+    return await this.send<CreateProductPayload, ProductInfoResponse>(
+      this.productClient,
+      PRODUCT_PATTERNS.CREATE,
+      {
+        ...dto,
+        accessToken,
+      },
+    );
+  }
 
-    return await firstValueFrom(this.productClient.send(PRODUCT_PATTERNS.CREATE, {
-      ...dto,
-      accessToken,
-    } as CreateProductPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+  @Get("findMany")
+  @HttpCode(HttpStatus.OK)
+  async findMany(
+    @Query("order") order: "asc" | "desc" = "asc",
+    @Query("limit") limit?: number,
+    @Query("offset") offset?: number,
+    @Query("sellerId") sellerId?: string,
+  ): Promise<FindManyApiResponse<ProductInfoResponse>> {
+    return await this.send<FindManyProductsPayload, FindManyApiResponse<ProductInfoResponse>>(
+      this.productClient,
+      PRODUCT_PATTERNS.FIND_MANY,
+      { order, limit, offset, sellerId },
+    );
+  }
+
+  @Get("my")
+  @HttpCode(HttpStatus.OK)
+  async findMy(
+    @Query("order") order: "asc" | "desc" = "asc",
+    @AccessToken() accessToken: string,
+    @Query("limit") limit?: number,
+    @Query("offset") offset?: number,
+  ): Promise<FindManyApiResponse<ProductInfoResponse>> {
+    return await this.send<FindMyProductsPayload, FindManyApiResponse<ProductInfoResponse>>(
+      this.productClient,
+      PRODUCT_PATTERNS.FIND_MY,
+      { accessToken, order, limit, offset },
+    );
+  }
+
+  @Get(":productId")
+  @HttpCode(HttpStatus.OK)
+  async findOne(
+    @Param("productId") productId: string,
+  ): Promise<ProductInfoResponse> {
+    return await this.send<FindOneProductPayload, ProductInfoResponse>(
+      this.productClient,
+      PRODUCT_PATTERNS.FIND_ONE,
+      { id: productId },
+    );
+  }
+
+  @Patch(":productId")
+  @HttpCode(HttpStatus.OK)
+  async edit(
+    @AccessToken() accessToken: string,
+    @Param("productId") productId: string,
+    @Body() dto: EditProductDto,
+  ): Promise<ProductInfoResponse> {
+    return await this.send<EditProductPayload, ProductInfoResponse>(
+      this.productClient,
+      PRODUCT_PATTERNS.EDIT,
+      {
+        ...dto,
+        id: productId,
+        accessToken,
+      },
+    );
+  }
+
+  @Delete(":productId")
+  @HttpCode(HttpStatus.OK)
+  async delete(
+    @AccessToken() accessToken: string,
+    @Param("productId") productId: string,
+  ): Promise<ProductInfoResponse> {
+    return await this.send<DeleteProductPayload, ProductInfoResponse>(
+      this.productClient,
+      PRODUCT_PATTERNS.DELETE,
+      {
+        id: productId,
+        accessToken,
+      },
+    );
+  }
+
+  @Post(":productId/hide")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async hide(
+    @AccessToken() accessToken: string,
+    @Param("productId") productId: string,
+  ): Promise<ProductInfoResponse> {
+    return await this.send<HideProductPayload, ProductInfoResponse>(
+      this.productClient,
+      PRODUCT_PATTERNS.HIDE,
+      {
+        id: productId,
+        accessToken,
+      },
+    );
   }
 }

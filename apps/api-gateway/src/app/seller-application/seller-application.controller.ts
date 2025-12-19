@@ -1,23 +1,24 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, Post, Req } from "@nestjs/common";
+import { AccessToken } from "../../common/decorators/access-token.decorator";
+import { BaseRpcController } from "../base-rpc.controller";
+import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, Post } from "@nestjs/common";
 import { ClientProxy, RpcException } from "@nestjs/microservices";
 import { ApproveSellerApplicationPayload, CancelSellerApplicationPayload, CreateSellerApplicationDto, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsDto, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, MicroserviceName, SellerApplicationResponse, USER_PATTERNS } from "@web-marketplace/shared";
-import { Request } from "express";
 import { catchError, firstValueFrom, throwError } from "rxjs";
 
 @Controller("sellerApplication")
-export class SellerApplicationController {
+export class SellerApplicationController extends BaseRpcController {
   constructor(
     @Inject(MicroserviceName.USER_SERVICE) private readonly userClient: ClientProxy,
-  ) {}
+  ) {
+    super();
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(
+    @AccessToken() accessToken: string,
     @Body() dto: CreateSellerApplicationDto,
-    @Req() req: Request,
   ): Promise<SellerApplicationResponse> {
-    const accessToken = req.cookies.accessToken;
-
     return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.CREATE, {
       accessToken,
       storeName: dto.storeName,
@@ -30,11 +31,9 @@ export class SellerApplicationController {
   @Post(":id/cancel")
   @HttpCode(HttpStatus.OK)
   async cancel(
+    @AccessToken() accessToken: string,
     @Param("id") id: string,
-    @Req() req: Request,
   ): Promise<SellerApplicationResponse> {
-    const accessToken = req.cookies.accessToken;
-
     return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.CANCEL, {
       accessToken,
       applicationId: id,
@@ -46,11 +45,9 @@ export class SellerApplicationController {
   @Post(":id/decline")
   @HttpCode(HttpStatus.OK)
   async decline(
+    @AccessToken() accessToken: string,
     @Param("id") id: string,
-    @Req() req: Request,
   ): Promise<SellerApplicationResponse> {
-    const accessToken = req.cookies.accessToken;
-
     return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.DECLINE, {
       accessToken,
       applicationId: id,
@@ -62,11 +59,9 @@ export class SellerApplicationController {
   @Post(":id/approve")
   @HttpCode(HttpStatus.OK)
   async approve(
+    @AccessToken() accessToken: string,
     @Param("id") id: string,
-    @Req() req: Request,
   ): Promise<SellerApplicationResponse> {
-    const accessToken = req.cookies.accessToken;
-
     return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.APPROVE, {
       accessToken,
       applicationId: id,
@@ -78,11 +73,9 @@ export class SellerApplicationController {
   @Get("findMany")
   @HttpCode(HttpStatus.OK)
   async findMany(
+    @AccessToken() accessToken: string,
     @Body() dto: FindManySellerApplicationsDto,
-    @Req() req: Request,
   ): Promise<FindManyApiResponse<SellerApplicationResponse>> {
-    const accessToken = req.cookies.accessToken;
-
     return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.FIND_MANY, {
       accessToken,
       ...dto,
@@ -94,11 +87,9 @@ export class SellerApplicationController {
   @Get(":id")
   @HttpCode(HttpStatus.OK)
   async findOne(
+    @AccessToken() accessToken: string,
     @Param("id") id: string,
-    @Req() req: Request,
   ): Promise<SellerApplicationResponse> {
-    const accessToken = req.cookies.accessToken;
-
     return await firstValueFrom(this.userClient.send(USER_PATTERNS.SELLER_APPLICATION.FIND_ONE, {
       accessToken,
       applicationId: id,

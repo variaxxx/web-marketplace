@@ -3,7 +3,7 @@ import { ProductIndexPayload, ProductInfo, ProductSearchDocument } from "./searc
 import { IndexResponse } from "@elastic/elasticsearch/lib/api/types";
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ElasticsearchService } from "@nestjs/elasticsearch";
-import { FindManyApiResponse, ProductInfoResponse, ProductSearchPayload, ProductStatus } from "@web-marketplace/shared";
+import { FindManyApiResponse, PRODUCT_STATUS, ProductInfoResponse, ProductSearchPayload } from "@web-marketplace/shared";
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -134,7 +134,7 @@ export class SearchService implements OnModuleInit {
           ],
           minimum_should_match: 1,
           filter: [
-            { term: { status: ProductStatus.ON_SALE } },
+            { term: { status: PRODUCT_STATUS.ON_SALE } },
             ...(payload.category ? [{ term: { category: payload.category } }] : []),
             ...(payload.minPrice || payload.maxPrice
               ? [{
