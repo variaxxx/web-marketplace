@@ -1,10 +1,10 @@
 import { AccessToken } from "../../common/decorators/access-token.decorator";
+import { pictureFileFilter } from "../../common/filters/picture-file.filter";
 import { BaseRpcController } from "../base-rpc.controller";
-import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Patch, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Patch, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { ClientProxy, RpcException } from "@nestjs/microservices";
 import { FileInterceptor } from "@nestjs/platform-express";
 import { AddAddressDto, AddAddressPayload, AddressResponse, DeleteAddressPayload, EditAddressDto, EditAddressPayload, EditUserInfoDto, EditUserInfoPayload, FindManyAddressesDto, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, GetMePayload, GetUserInfoPayload, MicroserviceName, SetProfilePicturePayload, USER_PATTERNS, UserInfoResponse } from "@web-marketplace/shared";
-import { extname } from "node:path";
 import { catchError, firstValueFrom, throwError } from "rxjs";
 
 @Controller("user")
@@ -48,13 +48,7 @@ export class UserController extends BaseRpcController {
     limits: {
       fileSize: 1024 * 1024 * 5,
     },
-    fileFilter: (req: any, file: any, cb: any) => {
-      if (file.mimetype.match(/\/(jpg|jpeg|png|gif)$/)) {
-        cb(null, true);
-      } else {
-        cb(new BadRequestException(`Unsupported file type ${extname(file.originalname)}`), false);
-      }
-    },
+    fileFilter: pictureFileFilter,
   }))
   async setPfp(
     @AccessToken() accessToken: string,

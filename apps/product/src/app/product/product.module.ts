@@ -1,3 +1,4 @@
+import { MinioModule } from "../../db/minio.module";
 import { PrismaModule } from "../../db/prisma.module";
 import { SearchModule } from "../search/search.module";
 import { ProductController } from "./product.controller";
@@ -8,6 +9,7 @@ import { Module } from "@nestjs/common";
   imports: [
     PrismaModule,
     SearchModule,
+    MinioModule,
   ],
   controllers: [ProductController],
   providers: [ProductService],

@@ -1,5 +1,7 @@
 import { WithTokenPayload } from "../../with-token.payload";
-import { IsInt, IsPositive, IsString, MaxLength, MinLength } from "class-validator";
+import { ImagePayload } from "./image.payload";
+import { Type } from "class-transformer";
+import { ArrayMaxSize, IsArray, IsInt, IsPositive, IsString, MaxLength, MinLength, ValidateNested } from "class-validator";
 
 export class CreateProductPayload extends WithTokenPayload {
   @IsString()
@@ -18,4 +20,10 @@ export class CreateProductPayload extends WithTokenPayload {
   @IsInt()
   @IsPositive()
   priceCents!: number;
+
+  @IsArray()
+  @ArrayMaxSize(5)
+  @ValidateNested({ each: true })
+  @Type(() => ImagePayload)
+  images!: ImagePayload[];
 }

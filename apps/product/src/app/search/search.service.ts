@@ -3,7 +3,23 @@ import { ProductIndexPayload, ProductInfo, ProductSearchDocument } from "./searc
 import { IndexResponse } from "@elastic/elasticsearch/lib/api/types";
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { ElasticsearchService } from "@nestjs/elasticsearch";
+import { Prisma } from "@prisma/generated/productClient";
 import { FindManyApiResponse, PRODUCT_STATUS, ProductInfoResponse, ProductSearchPayload } from "@web-marketplace/shared";
+
+const productSelect = {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  sellerId: true,
+  name: true,
+  description: true,
+  status: true,
+  priceCents: true,
+  category: true,
+  productPictures: {
+    select: { url: true },
+  },
+};
 
 @Injectable()
 export class SearchService implements OnModuleInit {
@@ -166,6 +182,7 @@ export class SearchService implements OnModuleInit {
       where: {
         id: { in: ids },
       },
+      select: productSelect,
     });
 
     const dbItemsMap = new Map(dbItems.map(i => [i.id, i]));
@@ -190,7 +207,24 @@ export class SearchService implements OnModuleInit {
     return {
       total,
       count: items.length,
-      items: items as ProductInfoResponse[],
+      items: items.map(this.toResponse),
+    };
+  }
+
+  private toResponse(
+    product: Prisma.ProductGetPayload<{ select: typeof productSelect }>,
+  ): ProductInfoResponse {
+    return {
+      id: product.id,
+      name: product.name,
+      category: product.category,
+      createdAt: product.createdAt,
+      updatedAt: product.updatedAt,
+      status: product.status,
+      description: product.description,
+      priceCents: product.priceCents,
+      sellerId: product.sellerId,
+      pictureUrls: product.productPictures.map(i => i.url),
     };
   }
 }

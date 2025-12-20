@@ -1,3 +1,4 @@
+import { Transform } from "class-transformer";
 import { IsInt, IsPositive, IsString, MaxLength, MinLength } from "class-validator";
 
 export class CreateProductDto {
@@ -14,6 +15,7 @@ export class CreateProductDto {
   @IsString()
   category!: string;
 
+  @Transform(({ value }) => Number(value))
   @IsInt()
   @IsPositive()
   priceCents!: number;

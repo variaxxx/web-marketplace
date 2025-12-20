@@ -1,11 +1,14 @@
+import { MinioService } from "../../db/minio.service";
 import { PrismaService } from "../../db/prisma.service";
 import { SearchService } from "../search/search.service";
-import { Injectable } from "@nestjs/common";
+import { Injectable, OnModuleInit } from "@nestjs/common";
 import { RpcException } from "@nestjs/microservices";
 import { Prisma } from "@prisma/generated/productClient";
 import { AuthTokenPayload, CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, HideProductPayload, MarkAsSoldProductPayload, PRODUCT_STATUS, ProductInfoResponse } from "@web-marketplace/shared";
+import { Buffer } from "node:buffer";
+import { randomUUID } from "node:crypto";
 
-const select = {
+const productSelect = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -21,20 +24,27 @@ const select = {
 };
 
 @Injectable()
-export class ProductService {
+export class ProductService implements OnModuleInit {
+  private readonly picturesBucketName = "products";
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly searchService: SearchService,
+    private readonly minio: MinioService,
   ) {}
+
+  async onModuleInit(): Promise<void> {
+    await this.minio.createBucket(this.picturesBucketName);
+  }
 
   private normalizeText(
     value: string,
     field: string,
   ): string {
-    const v = value.trim();
-    if (!v.length) {
+    const v = value?.trim();
+    if (!v || !v.length) {
       throw new RpcException({
-        status: 403,
+        status: 400,
         message: `Invalid ${field}`,
       });
     }
@@ -42,7 +52,7 @@ export class ProductService {
   }
 
   private toResponse(
-    product: Prisma.ProductGetPayload<{ select: typeof select }>,
+    product: Prisma.ProductGetPayload<{ select: typeof productSelect }>,
   ): ProductInfoResponse {
     return {
       id: product.id,
@@ -58,11 +68,38 @@ export class ProductService {
     };
   }
 
-  // TODO: upload pictures to minio and db
+  private handleNotFound(e: any): never {
+    if (e.code === "P2025") {
+      throw new RpcException({
+        status: 404,
+        message: "Product not found",
+      });
+    }
+    throw e;
+  }
+
   async create(
     payload: CreateProductPayload,
     jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
+    const files: {
+      url: string;
+      sizeBytes: number;
+    }[] = [];
+
+    for (const image of payload.images) {
+      const filename = await this.minio.upload(
+        this.picturesBucketName,
+        randomUUID(),
+        Buffer.from(image.buffer),
+      );
+
+      files.push({
+        url: `${this.picturesBucketName}/${filename}`,
+        sizeBytes: image.size,
+      });
+    }
+
     const product = await this.prisma.product.create({
       data: {
         sellerId: jwtPayload.userId,
@@ -71,8 +108,13 @@ export class ProductService {
         description: this.normalizeText(payload.description, "description"),
         category: payload.category,
         priceCents: payload.priceCents,
+        productPictures: {
+          createMany: {
+            data: files,
+          },
+        },
       },
-      select,
+      select: productSelect,
     });
 
     await this.searchService.indexProduct(product);
@@ -85,7 +127,7 @@ export class ProductService {
   ): Promise<ProductInfoResponse> {
     const product = await this.prisma.product.findUnique({
       where: { id: payload.id },
-      select,
+      select: productSelect,
     });
 
     if (!product) {
@@ -109,7 +151,7 @@ export class ProductService {
     const [products, totalCount] = await this.prisma.$transaction([
       this.prisma.product.findMany({
         where,
-        select,
+        select: productSelect,
         orderBy: { createdAt: payload.order },
         take: payload.limit ? Math.max(0, Math.min(payload.limit, 20)) : undefined,
         skip: payload.offset ?? 0,
@@ -128,19 +170,59 @@ export class ProductService {
     payload: EditProductPayload,
     jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
+    if (payload.existingImages.length + payload.newImages.length > 5) {
+      throw new RpcException({
+        status: 400,
+        message: "Max 5 pictures allowed",
+      });
+    }
+
+    const files: {
+      url: string;
+      sizeBytes: number;
+    }[] = [];
+
+    for (const image of payload.newImages) {
+      const filename = await this.minio.upload(
+        this.picturesBucketName,
+        randomUUID(),
+        Buffer.from(image.buffer),
+      );
+
+      files.push({
+        url: `${this.picturesBucketName}/${filename}`,
+        sizeBytes: image.size,
+      });
+    }
+
     const product = await this.prisma.product.update({
       where: {
         sellerId: jwtPayload.userId,
         id: payload.id,
       },
       data: {
-        name: this.normalizeText(payload.name, "name"),
-        description: this.normalizeText(payload.description, "description"),
+        name: payload.name ? this.normalizeText(payload.name, "name") : undefined,
+        description: payload.description ? this.normalizeText(payload.description, "description") : undefined,
         category: payload.category,
         priceCents: payload.priceCents,
+        productPictures: {
+          deleteMany: {
+            url: { notIn: payload.existingImages.concat(files.map(i => i.url)) },
+          },
+          createMany: {
+            data: files,
+          },
+        },
       },
-      select,
+      select: productSelect,
     }).catch(this.handleNotFound);
+
+    // for (const image of payload.existingImages) {
+    //   await this.minio.remove(
+    //     image.split("/")[0],
+    //     image.split("/")[1],
+    //   );
+    // }
 
     await this.searchService.indexProduct(product);
 
@@ -159,7 +241,7 @@ export class ProductService {
       data: {
         status: PRODUCT_STATUS.REMOVED,
       },
-      select,
+      select: productSelect,
     }).catch(this.handleNotFound);
 
     await this.searchService.indexProduct(product);
@@ -173,7 +255,7 @@ export class ProductService {
     const product = await this.prisma.product.update({
       where: { id: payload.productId },
       data: { status: PRODUCT_STATUS.SOLD },
-      select,
+      select: productSelect,
     }).catch(this.handleNotFound);
 
     await this.searchService.indexProduct(product);
@@ -189,7 +271,7 @@ export class ProductService {
         sellerId: jwtPayload.userId,
       },
       data: { status: PRODUCT_STATUS.HIDDEN },
-      select,
+      select: productSelect,
     }).catch(this.handleNotFound);
 
     await this.searchService.indexProduct(product);
@@ -209,7 +291,7 @@ export class ProductService {
     const [products, totalCount] = await this.prisma.$transaction([
       this.prisma.product.findMany({
         where,
-        select,
+        select: productSelect,
         orderBy: { createdAt: payload.order },
         take: payload.limit ? Math.max(0, Math.min(payload.limit, 20)) : undefined,
         skip: payload.offset ?? 0,
@@ -222,15 +304,5 @@ export class ProductService {
       count: products.length,
       items: products.map(this.toResponse),
     };
-  }
-
-  private handleNotFound(e: any): never {
-    if (e.code === "P2025") {
-      throw new RpcException({
-        status: 404,
-        message: "Product not found",
-      });
-    }
-    throw e;
   }
 }

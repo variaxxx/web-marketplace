@@ -1,23 +1,24 @@
 import { InjectMinio } from "./minio.decorator";
-import { Controller, Get, Param, Res } from "@nestjs/common";
+import { Controller, Get, Req, Res } from "@nestjs/common";
 import { RpcException } from "@nestjs/microservices";
-import { Response } from "express";
+import { Request, Response } from "express";
 import { Client as MinioClient } from "minio";
 
-@Controller("assets")
+@Controller("s3")
 export class AssetsController {
-  private readonly bucketName = "assets";
-
   constructor(
     @InjectMinio() private readonly minio: MinioClient,
   ) {}
 
-  @Get(":filename")
+  @Get("*path")
   async pfp(
-    @Param("filename") filename: string,
+    @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
-    const stream = await this.minio.getObject(this.bucketName, filename).catch((e) => {
+    const bucketName = req.path.split("/")[2];
+    const filename = req.path.replace(`/s3/${bucketName}/`, "");
+
+    const stream = await this.minio.getObject(bucketName, filename).catch((e) => {
       if (e.code === "NoSuchKey") {
         throw new RpcException({
           status: 404,

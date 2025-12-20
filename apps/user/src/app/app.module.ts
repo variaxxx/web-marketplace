@@ -16,7 +16,6 @@ export enum EnvKey {
   MINIO_PORT = "MINIO_PORT",
   MINIO_ACCESS_KEY = "MINIO_ACCESS_KEY",
   MINIO_SECRET_KEY = "MINIO_SECRET_KEY",
-  API_DOMAIN = "API_DOMAIN",
 }
 
 export const validationSchema = Joi.object({
@@ -26,7 +25,6 @@ export const validationSchema = Joi.object({
   [EnvKey.MINIO_PORT]: Joi.number().required(),
   [EnvKey.MINIO_ACCESS_KEY]: Joi.string().required(),
   [EnvKey.MINIO_SECRET_KEY]: Joi.string().required(),
-  [EnvKey.API_DOMAIN]: Joi.string().required(),
 });
 
 @Module({

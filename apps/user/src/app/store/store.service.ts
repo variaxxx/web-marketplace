@@ -1,11 +1,9 @@
-import { InjectMinio } from "../../db/minio.module";
+import { MinioService } from "../../db/minio.service";
 import { PrismaService } from "../../db/prisma.service";
-import { EnvKey } from "../app.module";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { RpcException } from "@nestjs/microservices";
 import { AuthTokenPayload, GetStoreInfoPayload, SetStorePicturePayload, StoreInfoResponse, UserRole } from "@web-marketplace/shared";
-import { Client as MinioClient } from "minio";
 import { Buffer } from "node:buffer";
 import { randomUUID } from "node:crypto";
 
@@ -16,7 +14,7 @@ export class StoreService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
-    @InjectMinio() private readonly minio: MinioClient,
+    private readonly minio: MinioService,
   ) {}
 
   async getInfo(
@@ -94,23 +92,21 @@ export class StoreService {
     if (!filename)
       return null;
 
-    const domain = this.configService.getOrThrow(EnvKey.API_DOMAIN);
-    return `${domain}assets/${filename}`;
+    return `${this.bucketName}/${filename}`;
   }
 
   private async uploadFile(file: Buffer): Promise<any> {
     const filename = randomUUID().toString();
-    await this.minio.putObject(
+    await this.minio.upload(
       this.bucketName,
       filename,
       file,
-      undefined,
     );
     return filename;
   }
 
   private async removeFile(filename: string): Promise<void> {
-    await this.minio.removeObject(
+    await this.minio.remove(
       this.bucketName,
       filename,
     );
