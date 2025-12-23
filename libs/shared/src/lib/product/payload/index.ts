@@ -5,6 +5,5 @@ export * from "./find-many.payload";
 export * from "./find-my.payload";
 export * from "./find-one.payload";
 export * from "./hide.payload";
-export * from "./image.payload";
 export * from "./mark-as-sold.payload";
 export * from "./search.payload";

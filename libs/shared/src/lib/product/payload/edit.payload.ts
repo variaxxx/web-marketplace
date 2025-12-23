@@ -19,9 +19,9 @@ export class EditProductPayload extends WithTokenPayload {
   @IsOptional()
   description?: string;
 
-  @IsString()
+  @IsUUID()
   @IsOptional()
-  category?: string;
+  categoryId?: string;
 
   @IsInt()
   @IsPositive()

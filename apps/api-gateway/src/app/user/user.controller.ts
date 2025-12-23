@@ -2,10 +2,9 @@ import { AccessToken } from "../../common/decorators/access-token.decorator";
 import { pictureFileFilter } from "../../common/filters/picture-file.filter";
 import { BaseRpcController } from "../base-rpc.controller";
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Patch, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
-import { ClientProxy, RpcException } from "@nestjs/microservices";
+import { ClientProxy } from "@nestjs/microservices";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { AddAddressDto, AddAddressPayload, AddressResponse, DeleteAddressPayload, EditAddressDto, EditAddressPayload, EditUserInfoDto, EditUserInfoPayload, FindManyAddressesDto, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, GetMePayload, GetUserInfoPayload, MicroserviceName, SetProfilePicturePayload, USER_PATTERNS, UserInfoResponse } from "@web-marketplace/shared";
-import { catchError, firstValueFrom, throwError } from "rxjs";
+import { AddAddressDto, AddAddressPayload, AddressInfoResponse, DeleteAddressPayload, EditAddressDto, EditAddressPayload, EditUserInfoDto, EditUserInfoPayload, FindManyAddressesDto, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, GetMePayload, GetUserInfoPayload, MicroserviceName, SetProfilePicturePayload, USER_PATTERNS, UserInfoResponse } from "@web-marketplace/shared";
 
 @Controller("user")
 export class UserController extends BaseRpcController {
@@ -21,13 +20,14 @@ export class UserController extends BaseRpcController {
     @AccessToken() accessToken: string,
     @Body() dto: EditUserInfoDto,
   ): Promise<UserInfoResponse> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.USER.EDIT_INFO, {
-      accessToken,
-      name: dto.name,
-      phone: dto.phone,
-    } as EditUserInfoPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    return await this.send<EditUserInfoPayload, UserInfoResponse>(
+      this.userClient,
+      USER_PATTERNS.USER.EDIT_INFO,
+      {
+        accessToken,
+        ...dto,
+      },
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -35,11 +35,13 @@ export class UserController extends BaseRpcController {
   async getMe(
     @AccessToken() accessToken: string,
   ): Promise<UserInfoResponse> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.USER.GET_ME, {
-      accessToken,
-    } as GetMePayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    return await this.send<GetMePayload, UserInfoResponse>(
+      this.userClient,
+      USER_PATTERNS.USER.GET_ME,
+      {
+        accessToken,
+      },
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -54,12 +56,14 @@ export class UserController extends BaseRpcController {
     @AccessToken() accessToken: string,
     @UploadedFile() image: Express.Multer.File,
   ): Promise<UserInfoResponse> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.USER.SET_PROFILE_PICTURE, {
-      accessToken,
-      image: image.buffer,
-    } as SetProfilePicturePayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    return await this.send<SetProfilePicturePayload, UserInfoResponse>(
+      this.userClient,
+      USER_PATTERNS.USER.SET_PROFILE_PICTURE,
+      {
+        accessToken,
+        image: image.buffer,
+      },
+    );
   }
 
   @HttpCode(HttpStatus.CREATED)
@@ -67,13 +71,15 @@ export class UserController extends BaseRpcController {
   async addAddress(
     @AccessToken() accessToken: string,
     @Body() dto: AddAddressDto,
-  ): Promise<AddressResponse> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.ADDRESS.ADD, {
-      accessToken,
-      ...dto,
-    } as AddAddressPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+  ): Promise<AddressInfoResponse> {
+    return await this.send<AddAddressPayload, AddressInfoResponse>(
+      this.userClient,
+      USER_PATTERNS.ADDRESS.ADD,
+      {
+        accessToken,
+        ...dto,
+      },
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -82,14 +88,16 @@ export class UserController extends BaseRpcController {
     @AccessToken() accessToken: string,
     @Param("id") id: string,
     @Body() dto: EditAddressDto,
-  ): Promise<AddressResponse> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.ADDRESS.EDIT, {
-      ...dto,
-      accessToken,
-      addressId: id,
-    } as EditAddressPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+  ): Promise<AddressInfoResponse> {
+    return await this.send<EditAddressPayload, AddressInfoResponse>(
+      this.userClient,
+      USER_PATTERNS.ADDRESS.EDIT,
+      {
+        accessToken,
+        ...dto,
+        addressId: id,
+      },
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -97,13 +105,15 @@ export class UserController extends BaseRpcController {
   async deleteAddress(
     @AccessToken() accessToken: string,
     @Param("id") id: string,
-  ): Promise<AddressResponse> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.ADDRESS.DELETE, {
-      accessToken,
-      addressId: id,
-    } as DeleteAddressPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+  ): Promise<AddressInfoResponse> {
+    return await this.send<DeleteAddressPayload, AddressInfoResponse>(
+      this.userClient,
+      USER_PATTERNS.ADDRESS.DELETE,
+      {
+        accessToken,
+        addressId: id,
+      },
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -111,13 +121,15 @@ export class UserController extends BaseRpcController {
   async findAddress(
     @AccessToken() accessToken: string,
     @Param("id") id: string,
-  ): Promise<AddressResponse> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.ADDRESS.FIND_ONE, {
-      accessToken,
-      addressId: id,
-    } as FindOneAddressPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+  ): Promise<AddressInfoResponse> {
+    return await this.send<FindOneAddressPayload, AddressInfoResponse>(
+      this.userClient,
+      USER_PATTERNS.ADDRESS.FIND_ONE,
+      {
+        accessToken,
+        addressId: id,
+      },
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -125,13 +137,15 @@ export class UserController extends BaseRpcController {
   async findManyAddresses(
     @AccessToken() accessToken: string,
     @Body() dto: FindManyAddressesDto,
-  ): Promise<FindManyApiResponse<AddressResponse>> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.ADDRESS.FIND_MANY, {
-      ...dto,
-      accessToken,
-    } as FindManyAddressesPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+  ): Promise<FindManyApiResponse<AddressInfoResponse>> {
+    return await this.send<FindManyAddressesPayload, FindManyApiResponse<AddressInfoResponse>>(
+      this.userClient,
+      USER_PATTERNS.ADDRESS.FIND_MANY,
+      {
+        accessToken,
+        ...dto,
+      },
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -140,11 +154,13 @@ export class UserController extends BaseRpcController {
     @AccessToken() accessToken: string,
     @Param("id") id: string,
   ): Promise<UserInfoResponse> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.USER.GET_INFO, {
-      accessToken,
-      userId: id,
-    } as GetUserInfoPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    return await this.send<GetUserInfoPayload, UserInfoResponse>(
+      this.userClient,
+      USER_PATTERNS.USER.GET_INFO,
+      {
+        userId: id,
+        accessToken,
+      },
+    );
   }
 }

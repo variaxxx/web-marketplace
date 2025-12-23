@@ -28,7 +28,7 @@ export class ProductController extends BaseRpcController {
 
     return await this.send<ProductSearchPayload, FindManyApiResponse<ProductInfoResponse>>(
       this.productClient,
-      PRODUCT_PATTERNS.SEARCH,
+      PRODUCT_PATTERNS.PRODUCT.SEARCH,
       { query, limit, category, maxPrice, minPrice, offset },
     );
   }
@@ -56,7 +56,7 @@ export class ProductController extends BaseRpcController {
 
     return await this.send<CreateProductPayload, ProductInfoResponse>(
       this.productClient,
-      PRODUCT_PATTERNS.CREATE,
+      PRODUCT_PATTERNS.PRODUCT.CREATE,
       {
         ...dto,
         accessToken,
@@ -80,7 +80,7 @@ export class ProductController extends BaseRpcController {
   ): Promise<FindManyApiResponse<ProductInfoResponse>> {
     return await this.send<FindManyProductsPayload, FindManyApiResponse<ProductInfoResponse>>(
       this.productClient,
-      PRODUCT_PATTERNS.FIND_MANY,
+      PRODUCT_PATTERNS.PRODUCT.FIND_MANY,
       { order, limit, offset, sellerId },
     );
   }
@@ -95,7 +95,7 @@ export class ProductController extends BaseRpcController {
   ): Promise<FindManyApiResponse<ProductInfoResponse>> {
     return await this.send<FindMyProductsPayload, FindManyApiResponse<ProductInfoResponse>>(
       this.productClient,
-      PRODUCT_PATTERNS.FIND_MY,
+      PRODUCT_PATTERNS.PRODUCT.FIND_MY,
       { accessToken, order, limit, offset },
     );
   }
@@ -107,7 +107,7 @@ export class ProductController extends BaseRpcController {
   ): Promise<ProductInfoResponse> {
     return await this.send<FindOneProductPayload, ProductInfoResponse>(
       this.productClient,
-      PRODUCT_PATTERNS.FIND_ONE,
+      PRODUCT_PATTERNS.PRODUCT.FIND_ONE,
       { id: productId },
     );
   }
@@ -128,7 +128,7 @@ export class ProductController extends BaseRpcController {
   ): Promise<ProductInfoResponse> {
     return await this.send<EditProductPayload, ProductInfoResponse>(
       this.productClient,
-      PRODUCT_PATTERNS.EDIT,
+      PRODUCT_PATTERNS.PRODUCT.EDIT,
       {
         ...dto,
         id: productId,
@@ -152,7 +152,7 @@ export class ProductController extends BaseRpcController {
   ): Promise<ProductInfoResponse> {
     return await this.send<DeleteProductPayload, ProductInfoResponse>(
       this.productClient,
-      PRODUCT_PATTERNS.DELETE,
+      PRODUCT_PATTERNS.PRODUCT.DELETE,
       {
         id: productId,
         accessToken,
@@ -168,7 +168,7 @@ export class ProductController extends BaseRpcController {
   ): Promise<ProductInfoResponse> {
     return await this.send<HideProductPayload, ProductInfoResponse>(
       this.productClient,
-      PRODUCT_PATTERNS.HIDE,
+      PRODUCT_PATTERNS.PRODUCT.HIDE,
       {
         id: productId,
         accessToken,

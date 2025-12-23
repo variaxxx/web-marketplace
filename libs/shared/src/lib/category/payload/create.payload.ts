@@ -1,0 +1,16 @@
+import { WithTokenPayload } from "../../with-token.payload";
+import { IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
+
+export class CreateCategoryPayload extends WithTokenPayload {
+  @IsString()
+  @MaxLength(128)
+  name!: string;
+
+  @IsString()
+  @MaxLength(64)
+  slugNode!: string;
+
+  @IsUUID()
+  @IsOptional()
+  parentCategoryId?: string;
+}

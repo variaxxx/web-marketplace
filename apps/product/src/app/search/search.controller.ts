@@ -10,7 +10,7 @@ export class SearchController {
   ) {}
 
   @IsPublic()
-  @MessagePattern(PRODUCT_PATTERNS.SEARCH)
+  @MessagePattern(PRODUCT_PATTERNS.PRODUCT.SEARCH)
   async search(
     @Payload() payload: ProductSearchPayload,
   ): Promise<FindManyApiResponse<ProductInfoResponse>> {

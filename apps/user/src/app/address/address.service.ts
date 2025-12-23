@@ -1,7 +1,7 @@
 import { PrismaService } from "../../db/prisma.service";
 import { Injectable } from "@nestjs/common";
 import { RpcException } from "@nestjs/microservices";
-import { AddAddressPayload, AddressResponse, AuthTokenPayload, DeleteAddressPayload, EditAddressPayload, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, UserRole } from "@web-marketplace/shared";
+import { AddAddressPayload, AddressInfoResponse, AuthTokenPayload, DeleteAddressPayload, EditAddressPayload, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, UserRole } from "@web-marketplace/shared";
 
 @Injectable()
 export class AddressService {
@@ -23,7 +23,7 @@ export class AddressService {
   async add(
     payload: AddAddressPayload,
     jwtPayload: AuthTokenPayload,
-  ): Promise<AddressResponse> {
+  ): Promise<AddressInfoResponse> {
     const address = await this.prisma.address.create({
       data: {
         userId: jwtPayload.userId,
@@ -47,7 +47,7 @@ export class AddressService {
   async edit(
     payload: EditAddressPayload,
     jwtPayload: AuthTokenPayload,
-  ): Promise<AddressResponse> {
+  ): Promise<AddressInfoResponse> {
     const address = await this.prisma.address.update({
       where: {
         id: payload.addressId,
@@ -84,7 +84,7 @@ export class AddressService {
   async delete(
     payload: DeleteAddressPayload,
     jwtPayload: AuthTokenPayload,
-  ): Promise<AddressResponse> {
+  ): Promise<AddressInfoResponse> {
     const address = await this.prisma.address.update({
       where: {
         id: payload.addressId,
@@ -115,7 +115,7 @@ export class AddressService {
   async findOne(
     payload: FindOneAddressPayload,
     jwtPayload: AuthTokenPayload,
-  ): Promise<AddressResponse> {
+  ): Promise<AddressInfoResponse> {
     const address = await this.prisma.address.findUnique({
       where: { id: payload.addressId },
       select: {
@@ -151,7 +151,7 @@ export class AddressService {
   async findMany(
     payload: FindManyAddressesPayload,
     jwtPayload: AuthTokenPayload,
-  ): Promise<FindManyApiResponse<AddressResponse>> {
+  ): Promise<FindManyApiResponse<AddressInfoResponse>> {
     const where: any = {
       userId: jwtPayload.userId,
       isDeleted: false,

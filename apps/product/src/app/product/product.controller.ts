@@ -10,7 +10,7 @@ export class ProductController {
   ) {}
 
   @RpcAllowedRoles(UserRole.SELLER)
-  @MessagePattern(PRODUCT_PATTERNS.CREATE)
+  @MessagePattern(PRODUCT_PATTERNS.PRODUCT.CREATE)
   async create(
     @Payload() payload: CreateProductPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
@@ -19,7 +19,7 @@ export class ProductController {
   }
 
   @RpcAllowedRoles(UserRole.SELLER)
-  @MessagePattern(PRODUCT_PATTERNS.EDIT)
+  @MessagePattern(PRODUCT_PATTERNS.PRODUCT.EDIT)
   async edit(
     @Payload() payload: EditProductPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
@@ -28,7 +28,7 @@ export class ProductController {
   }
 
   @RpcAllowedRoles(UserRole.SELLER)
-  @MessagePattern(PRODUCT_PATTERNS.DELETE)
+  @MessagePattern(PRODUCT_PATTERNS.PRODUCT.DELETE)
   async delete(
     @Payload() payload: DeleteProductPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
@@ -37,7 +37,7 @@ export class ProductController {
   }
 
   @RpcAllowedRoles(UserRole.SELLER)
-  @MessagePattern(PRODUCT_PATTERNS.HIDE)
+  @MessagePattern(PRODUCT_PATTERNS.PRODUCT.HIDE)
   async hide(
     @Payload() payload: HideProductPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
@@ -46,7 +46,7 @@ export class ProductController {
   }
 
   @RpcAllowedRoles(UserRole.SELLER)
-  @MessagePattern(PRODUCT_PATTERNS.FIND_MY)
+  @MessagePattern(PRODUCT_PATTERNS.PRODUCT.FIND_MY)
   async findMy(
     @Payload() payload: FindMyProductsPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
@@ -55,7 +55,7 @@ export class ProductController {
   }
 
   @IsPublic()
-  @MessagePattern(PRODUCT_PATTERNS.FIND_ONE)
+  @MessagePattern(PRODUCT_PATTERNS.PRODUCT.FIND_ONE)
   async findOne(
     @Payload() payload: FindOneProductPayload,
   ): Promise<ProductInfoResponse> {
@@ -63,7 +63,7 @@ export class ProductController {
   }
 
   @IsPublic()
-  @MessagePattern(PRODUCT_PATTERNS.FIND_MANY)
+  @MessagePattern(PRODUCT_PATTERNS.PRODUCT.FIND_MANY)
   async findMany(
     @Payload() payload: FindManyProductsPayload,
   ): Promise<FindManyApiResponse<ProductInfoResponse>> {
@@ -71,7 +71,7 @@ export class ProductController {
   }
 
   @IsPublic()
-  @EventPattern(PRODUCT_PATTERNS.MARK_AS_SOLD)
+  @EventPattern(PRODUCT_PATTERNS.PRODUCT.MARK_AS_SOLD)
   async markAsSold(
     @Payload() payload: MarkAsSoldProductPayload,
   ): Promise<void> {

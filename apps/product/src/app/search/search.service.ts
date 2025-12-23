@@ -104,7 +104,7 @@ export class SearchService implements OnModuleInit {
       document: {
         name: product.name,
         description: product.description,
-        category: product.category,
+        category: product.category.slug,
         priceCents: product.priceCents,
         status: product.status,
       },
@@ -217,7 +217,7 @@ export class SearchService implements OnModuleInit {
     return {
       id: product.id,
       name: product.name,
-      category: product.category,
+      categoryName: product.category.name,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
       status: product.status,

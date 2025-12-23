@@ -15,7 +15,7 @@ export class CreateProductPayload extends WithTokenPayload {
   description!: string;
 
   @IsString()
-  category!: string;
+  categoryId!: string;
 
   @IsInt()
   @IsPositive()

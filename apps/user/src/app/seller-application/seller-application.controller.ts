@@ -1,7 +1,7 @@
 import { SellerApplicationService } from "./seller-application.service";
 import { Controller } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
-import { ApproveSellerApplicationPayload, AuthTokenPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, JwtPayload, RpcAllowedRoles, SellerApplicationResponse, USER_PATTERNS, UserRole } from "@web-marketplace/shared";
+import { ApproveSellerApplicationPayload, AuthTokenPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, JwtPayload, RpcAllowedRoles, SellerApplicationInfoResponse, USER_PATTERNS, UserRole } from "@web-marketplace/shared";
 
 @Controller()
 export class SellerApplicationController {
@@ -14,7 +14,7 @@ export class SellerApplicationController {
   async create(
     @Payload() payload: CreateSellerApplicationPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
-  ): Promise<SellerApplicationResponse> {
+  ): Promise<SellerApplicationInfoResponse> {
     return await this.sellerApplicationService.create(payload, jwtPayload);
   }
 
@@ -22,7 +22,7 @@ export class SellerApplicationController {
   @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.APPROVE)
   async approve(
     @Payload() payload: ApproveSellerApplicationPayload,
-  ): Promise<SellerApplicationResponse> {
+  ): Promise<SellerApplicationInfoResponse> {
     return await this.sellerApplicationService.approve(payload);
   }
 
@@ -30,7 +30,7 @@ export class SellerApplicationController {
   @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.DECLINE)
   async decline(
     @Payload() payload: DeclineSellerApplicationPayload,
-  ): Promise<SellerApplicationResponse> {
+  ): Promise<SellerApplicationInfoResponse> {
     return await this.sellerApplicationService.decline(payload);
   }
 
@@ -39,7 +39,7 @@ export class SellerApplicationController {
   async cancel(
     @Payload() payload: CancelSellerApplicationPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
-  ): Promise<SellerApplicationResponse> {
+  ): Promise<SellerApplicationInfoResponse> {
     return await this.sellerApplicationService.cancel(payload, jwtPayload);
   }
 
@@ -47,7 +47,7 @@ export class SellerApplicationController {
   async findOne(
     @Payload() payload: FindOneSellerApplicationPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
-  ): Promise<SellerApplicationResponse> {
+  ): Promise<SellerApplicationInfoResponse> {
     return await this.sellerApplicationService.findOne(payload, jwtPayload);
   }
 
@@ -55,7 +55,7 @@ export class SellerApplicationController {
   async findMany(
     @Payload() payload: FindManySellerApplicationsPayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
-  ): Promise<FindManyApiResponse<SellerApplicationResponse>> {
+  ): Promise<FindManyApiResponse<SellerApplicationInfoResponse>> {
     return await this.sellerApplicationService.findMany(payload, jwtPayload);
   }
 }

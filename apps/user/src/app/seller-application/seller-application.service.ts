@@ -1,7 +1,7 @@
 import { PrismaService } from "../../db/prisma.service";
 import { Inject, Injectable } from "@nestjs/common";
 import { ClientProxy, RpcException } from "@nestjs/microservices";
-import { ApproveSellerApplicationPayload, AUTH_PATTERNS, AuthTokenPayload, BecomeSellerPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, MicroserviceName, SellerApplicationResponse, SellerApplicationStatus, UserRole } from "@web-marketplace/shared";
+import { ApproveSellerApplicationPayload, AUTH_PATTERNS, AuthTokenPayload, BecomeSellerPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, MicroserviceName, SellerApplicationInfoResponse, SellerApplicationStatus, UserRole } from "@web-marketplace/shared";
 
 @Injectable()
 export class SellerApplicationService {
@@ -13,7 +13,7 @@ export class SellerApplicationService {
   async create(
     payload: CreateSellerApplicationPayload,
     tokenPayload: AuthTokenPayload,
-  ): Promise<SellerApplicationResponse> {
+  ): Promise<SellerApplicationInfoResponse> {
     if (tokenPayload.role === UserRole.SELLER) {
       throw new RpcException({
         status: 400,
@@ -46,7 +46,7 @@ export class SellerApplicationService {
 
   async approve(
     payload: ApproveSellerApplicationPayload,
-  ): Promise<SellerApplicationResponse> {
+  ): Promise<SellerApplicationInfoResponse> {
     const application = await this.prisma.$transaction(async (tx) => {
       const application = await tx.sellerApplication.update({
         where: {
@@ -93,7 +93,7 @@ export class SellerApplicationService {
   async cancel(
     payload: CancelSellerApplicationPayload,
     tokenPayload: AuthTokenPayload,
-  ): Promise<SellerApplicationResponse> {
+  ): Promise<SellerApplicationInfoResponse> {
     const application = await this.prisma.sellerApplication.update({
       where: {
         id: payload.applicationId,
@@ -116,7 +116,7 @@ export class SellerApplicationService {
 
   async decline(
     payload: DeclineSellerApplicationPayload,
-  ): Promise<SellerApplicationResponse> {
+  ): Promise<SellerApplicationInfoResponse> {
     const application = await this.prisma.sellerApplication.update({
       where: {
         id: payload.applicationId,
@@ -144,7 +144,7 @@ export class SellerApplicationService {
   async findOne(
     payload: FindOneSellerApplicationPayload,
     tokenPayload: AuthTokenPayload,
-  ): Promise<SellerApplicationResponse> {
+  ): Promise<SellerApplicationInfoResponse> {
     const application = await this.prisma.sellerApplication.findUnique({
       where: { id: payload.applicationId },
     });
@@ -172,7 +172,7 @@ export class SellerApplicationService {
   async findMany(
     payload: FindManySellerApplicationsPayload,
     jwtPayload: AuthTokenPayload,
-  ): Promise<FindManyApiResponse<SellerApplicationResponse>> {
+  ): Promise<FindManyApiResponse<SellerApplicationInfoResponse>> {
     const where: any = {};
 
     if (payload.status)
@@ -212,7 +212,7 @@ export class SellerApplicationService {
       storeName: string;
       storeDescription: string;
     },
-  ): SellerApplicationResponse {
+  ): SellerApplicationInfoResponse {
     return {
       id: application.id,
       createdAt: application.createdAt,

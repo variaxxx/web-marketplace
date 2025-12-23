@@ -1,7 +1,7 @@
 import { StoreService } from "./store.service";
 import { Controller } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
-import { AuthTokenPayload, GetMyStorePayload, GetStoreInfoPayload, IsPublic, JwtPayload, RpcAllowedRoles, SetStorePicturePayload, StoreInfoResponse, USER_PATTERNS, UserRole } from "@web-marketplace/shared";
+import { AuthTokenPayload, FindMyStorePayload, FindOneStorePayload, IsPublic, JwtPayload, RpcAllowedRoles, SetStorePicturePayload, StoreInfoResponse, USER_PATTERNS, UserRole } from "@web-marketplace/shared";
 
 @Controller()
 export class StoreController {
@@ -12,7 +12,7 @@ export class StoreController {
   @IsPublic()
   @MessagePattern(USER_PATTERNS.STORE.GET_INFO)
   async getInfo(
-    @Payload() payload: GetStoreInfoPayload,
+    @Payload() payload: FindOneStorePayload,
   ): Promise<StoreInfoResponse> {
     return await this.storeService.getInfo(payload);
   }
@@ -20,7 +20,7 @@ export class StoreController {
   @RpcAllowedRoles(UserRole.SELLER)
   @MessagePattern(USER_PATTERNS.STORE.GET_MY)
   async getMyStore(
-    @Payload() payload: GetMyStorePayload,
+    @Payload() payload: FindMyStorePayload,
     @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<StoreInfoResponse> {
     return await this.storeService.getInfo({

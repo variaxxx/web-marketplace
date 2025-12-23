@@ -2,7 +2,7 @@ import { ClientProxy, RpcException } from "@nestjs/microservices";
 import { catchError, firstValueFrom, Observable, throwError } from "rxjs";
 
 export abstract class BaseRpcController {
-  protected send<T, V>(
+  protected send<T = any, V = any>(
     client: ClientProxy,
     pattern: string,
     payload: T,

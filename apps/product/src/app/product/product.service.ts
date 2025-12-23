@@ -4,7 +4,7 @@ import { SearchService } from "../search/search.service";
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { RpcException } from "@nestjs/microservices";
 import { Prisma } from "@prisma/generated/productClient";
-import { AuthTokenPayload, CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, HideProductPayload, MarkAsSoldProductPayload, PRODUCT_STATUS, ProductInfoResponse } from "@web-marketplace/shared";
+import { AuthTokenPayload, CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, HideProductPayload, MarkAsSoldProductPayload, normalizeText, PRODUCT_STATUS, ProductInfoResponse } from "@web-marketplace/shared";
 import { Buffer } from "node:buffer";
 import { randomUUID } from "node:crypto";
 
@@ -17,7 +17,12 @@ const productSelect = {
   description: true,
   status: true,
   priceCents: true,
-  category: true,
+  category: {
+    select: {
+      name: true,
+      slug: true,
+    },
+  },
   productPictures: {
     select: { url: true },
   },
@@ -37,27 +42,13 @@ export class ProductService implements OnModuleInit {
     await this.minio.createBucket(this.picturesBucketName);
   }
 
-  private normalizeText(
-    value: string,
-    field: string,
-  ): string {
-    const v = value?.trim();
-    if (!v || !v.length) {
-      throw new RpcException({
-        status: 400,
-        message: `Invalid ${field}`,
-      });
-    }
-    return v;
-  }
-
   private toResponse(
     product: Prisma.ProductGetPayload<{ select: typeof productSelect }>,
   ): ProductInfoResponse {
     return {
       id: product.id,
       name: product.name,
-      category: product.category,
+      categoryName: product.category.name,
       createdAt: product.createdAt,
       updatedAt: product.updatedAt,
       status: product.status,
@@ -78,6 +69,16 @@ export class ProductService implements OnModuleInit {
     throw e;
   }
 
+  private handleCategoryFKConstraint(e: any): never {
+    if (e.code === "P2003") {
+      throw new RpcException({
+        status: 400,
+        message: "Category not found",
+      });
+    }
+    throw e;
+  }
+
   async create(
     payload: CreateProductPayload,
     jwtPayload: AuthTokenPayload,
@@ -85,9 +86,14 @@ export class ProductService implements OnModuleInit {
     const files: {
       url: string;
       sizeBytes: number;
+      mimeType: string;
+      isMain: boolean;
+      order: number;
     }[] = [];
 
-    for (const image of payload.images) {
+    for (let i = 0; i < payload.images.length; i++) {
+      const image = payload.images[i];
+
       const filename = await this.minio.upload(
         this.picturesBucketName,
         randomUUID(),
@@ -97,6 +103,9 @@ export class ProductService implements OnModuleInit {
       files.push({
         url: `${this.picturesBucketName}/${filename}`,
         sizeBytes: image.size,
+        isMain: i === 0,
+        mimeType: image.mimetype,
+        order: i,
       });
     }
 
@@ -104,9 +113,9 @@ export class ProductService implements OnModuleInit {
       data: {
         sellerId: jwtPayload.userId,
         status: PRODUCT_STATUS.ON_SALE,
-        name: this.normalizeText(payload.name, "name"),
-        description: this.normalizeText(payload.description, "description"),
-        category: payload.category,
+        name: normalizeText(payload.name, "name"),
+        description: normalizeText(payload.description, "description"),
+        categoryId: payload.categoryId,
         priceCents: payload.priceCents,
         productPictures: {
           createMany: {
@@ -115,7 +124,7 @@ export class ProductService implements OnModuleInit {
         },
       },
       select: productSelect,
-    });
+    }).catch(this.handleCategoryFKConstraint);
 
     await this.searchService.indexProduct(product);
 
@@ -180,6 +189,9 @@ export class ProductService implements OnModuleInit {
     const files: {
       url: string;
       sizeBytes: number;
+      mimeType: string;
+      isMain?: boolean;
+      order?: number;
     }[] = [];
 
     for (const image of payload.newImages) {
@@ -192,7 +204,29 @@ export class ProductService implements OnModuleInit {
       files.push({
         url: `${this.picturesBucketName}/${filename}`,
         sizeBytes: image.size,
+        mimeType: image.mimetype,
+        isMain: undefined,
+        order: undefined,
       });
+    }
+
+    const oldPictures = await this.prisma.productPicture.findMany({ where: { productId: payload.id } });
+
+    let lastFile = 0;
+    let lastOrder = 0;
+    for (let i = 0; i < 5; i++) {
+      if (
+        lastFile < files.length
+        && (
+          !oldPictures[i]
+          || !payload.existingImages.includes(oldPictures[i].url,
+          )
+        )
+      ) {
+        files[lastFile].order = oldPictures[i].order ?? lastOrder + 1;
+        files[lastFile++].isMain = oldPictures[i].isMain ?? false;
+        lastOrder = files[lastFile].order;
+      }
     }
 
     const product = await this.prisma.product.update({
@@ -201,9 +235,9 @@ export class ProductService implements OnModuleInit {
         id: payload.id,
       },
       data: {
-        name: payload.name ? this.normalizeText(payload.name, "name") : undefined,
-        description: payload.description ? this.normalizeText(payload.description, "description") : undefined,
-        category: payload.category,
+        name: payload.name ? normalizeText(payload.name, "name") : undefined,
+        description: payload.description ? normalizeText(payload.description, "description") : undefined,
+        categoryId: payload.categoryId,
         priceCents: payload.priceCents,
         productPictures: {
           deleteMany: {

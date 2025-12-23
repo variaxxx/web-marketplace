@@ -1,4 +1,5 @@
 import { RpcAuthGuard } from "../../../../libs/shared/src";
+import { CategoryModule } from "./category/category.module";
 import { ProductModule } from "./product/product.module";
 import { SearchModule } from "./search/search.module";
 import { Module } from "@nestjs/common";
@@ -33,6 +34,7 @@ export const validationSchema = Joi.object({
     JwtModule.register({ global: true }),
     ProductModule,
     SearchModule,
+    CategoryModule,
   ],
   controllers: [],
   providers: [

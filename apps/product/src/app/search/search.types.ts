@@ -20,7 +20,10 @@ export type ProductSearchHit = SearchHit<ProductSearchDocument>;
 export interface ProductInfo {
   id: string;
   name: string;
-  category: string;
+  category: {
+    name: string;
+    slug: string;
+  };
   description: string;
   priceCents: number;
   status: ProductStatus;

@@ -1,4 +1,4 @@
-import { IsBuffer } from "../../validators/is-buffer.validator";
+import { IsBuffer } from "../../common/validators/is-buffer.validator";
 import { IsIn, IsInt, IsPositive, IsString } from "class-validator";
 import { Buffer } from "node:buffer";
 

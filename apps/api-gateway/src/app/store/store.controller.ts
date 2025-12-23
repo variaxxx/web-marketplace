@@ -1,11 +1,10 @@
 import { AccessToken } from "../../common/decorators/access-token.decorator";
 import { BaseRpcController } from "../base-rpc.controller";
 import { BadRequestException, Controller, Get, HttpCode, HttpStatus, Inject, Param, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
-import { ClientProxy, RpcException } from "@nestjs/microservices";
+import { ClientProxy } from "@nestjs/microservices";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { GetMyStorePayload, GetStoreInfoPayload, MicroserviceName, SetStorePicturePayload, StoreInfoResponse, USER_PATTERNS } from "@web-marketplace/shared";
+import { FindMyStorePayload, FindOneStorePayload, MicroserviceName, SetStorePicturePayload, StoreInfoResponse, USER_PATTERNS } from "@web-marketplace/shared";
 import { extname } from "node:path";
-import { catchError, firstValueFrom, throwError } from "rxjs";
 
 @Controller("store")
 export class StoreController extends BaseRpcController {
@@ -20,11 +19,13 @@ export class StoreController extends BaseRpcController {
   async getMyStore(
     @AccessToken() accessToken: string,
   ): Promise<StoreInfoResponse> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.STORE.GET_MY, {
-      accessToken,
-    } as GetMyStorePayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    return await this.send<FindMyStorePayload, StoreInfoResponse>(
+      this.userClient,
+      USER_PATTERNS.STORE.GET_MY,
+      {
+        accessToken,
+      },
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -33,12 +34,13 @@ export class StoreController extends BaseRpcController {
     @AccessToken() accessToken: string,
     @Param("id") id: string,
   ): Promise<StoreInfoResponse> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.STORE.GET_INFO, {
-      accessToken,
-      ownerId: id,
-    } as GetStoreInfoPayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    return await this.send<FindOneStorePayload, StoreInfoResponse>(
+      this.userClient,
+      USER_PATTERNS.STORE.GET_INFO,
+      {
+        ownerId: id,
+      },
+    );
   }
 
   @HttpCode(HttpStatus.OK)
@@ -59,11 +61,13 @@ export class StoreController extends BaseRpcController {
     @AccessToken() accessToken: string,
     @UploadedFile() image: Express.Multer.File,
   ): Promise<StoreInfoResponse> {
-    return await firstValueFrom(this.userClient.send(USER_PATTERNS.STORE.SET_STORE_PICTURE, {
-      accessToken,
-      image: image.buffer,
-    } as SetStorePicturePayload).pipe(
-      catchError(error => throwError(() => new RpcException(error))),
-    ));
+    return await this.send<SetStorePicturePayload, StoreInfoResponse>(
+      this.userClient,
+      USER_PATTERNS.STORE.SET_STORE_PICTURE,
+      {
+        accessToken,
+        image: image.buffer,
+      },
+    );
   }
 }

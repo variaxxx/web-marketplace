@@ -3,7 +3,7 @@ import { PrismaService } from "../../db/prisma.service";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { RpcException } from "@nestjs/microservices";
-import { AuthTokenPayload, GetStoreInfoPayload, SetStorePicturePayload, StoreInfoResponse, UserRole } from "@web-marketplace/shared";
+import { AuthTokenPayload, FindOneStorePayload, SetStorePicturePayload, StoreInfoResponse, UserRole } from "@web-marketplace/shared";
 import { Buffer } from "node:buffer";
 import { randomUUID } from "node:crypto";
 
@@ -18,7 +18,7 @@ export class StoreService {
   ) {}
 
   async getInfo(
-    payload: GetStoreInfoPayload,
+    payload: FindOneStorePayload,
   ): Promise<StoreInfoResponse> {
     const store = await this.prisma.store.findUnique({
       where: { ownerId: payload.ownerId },

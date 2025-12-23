@@ -1,4 +1,4 @@
-import { Device } from "../auth.types";
+import { Device } from "../types";
 import { IsObject, IsString } from "class-validator";
 
 export class LoginPayload {
