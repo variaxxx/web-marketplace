@@ -1,12 +1,13 @@
 import { MinioService } from "../../db/minio.service";
 import { PrismaService } from "../../db/prisma.service";
 import { SearchService } from "../search/search.service";
-import { Injectable, OnModuleInit } from "@nestjs/common";
-import { RpcException } from "@nestjs/microservices";
+import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
+import { ClientProxy, RpcException } from "@nestjs/microservices";
 import { Prisma } from "@prisma/generated/productClient";
-import { AuthTokenPayload, CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, HideProductPayload, MarkAsSoldProductPayload, normalizeText, PRODUCT_STATUS, ProductInfoResponse } from "@web-marketplace/shared";
+import { AuthTokenPayload, CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, FindProductsByIdsPayload, HideProductPayload, MarkAsSoldProductPayload, MicroserviceName, normalizeText, PRODUCT_STATUS, ProductInfoResponse, ProductStatus, ProductStatusChangedPayload, PutProductForSalePayload, USER_PATTERNS } from "@web-marketplace/shared";
 import { Buffer } from "node:buffer";
 import { randomUUID } from "node:crypto";
+import { firstValueFrom } from "rxjs";
 
 const productSelect = {
   id: true,
@@ -36,6 +37,7 @@ export class ProductService implements OnModuleInit {
     private readonly prisma: PrismaService,
     private readonly searchService: SearchService,
     private readonly minio: MinioService,
+    @Inject(MicroserviceName.USER_SERVICE) private readonly userClient: ClientProxy,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -136,7 +138,10 @@ export class ProductService implements OnModuleInit {
     payload: FindOneProductPayload,
   ): Promise<ProductInfoResponse> {
     const product = await this.prisma.product.findUnique({
-      where: { id: payload.id },
+      where: {
+        id: payload.id,
+        status: { in: [PRODUCT_STATUS.ON_SALE, PRODUCT_STATUS.SOLD] },
+      },
       select: productSelect,
     });
 
@@ -153,7 +158,9 @@ export class ProductService implements OnModuleInit {
   async findMany(
     payload: FindManyProductsPayload,
   ): Promise<FindManyApiResponse<ProductInfoResponse>> {
-    const where: any = {};
+    const where: any = {
+      status: { in: [PRODUCT_STATUS.ON_SALE, PRODUCT_STATUS.SOLD] },
+    };
 
     if (payload.sellerId)
       where.sellerId = payload.sellerId;
@@ -280,6 +287,7 @@ export class ProductService implements OnModuleInit {
     }).catch(this.handleNotFound);
 
     await this.searchService.indexProduct(product);
+    await this.emitStatusChangedEvent(payload.id, PRODUCT_STATUS.REMOVED);
 
     return this.toResponse(product);
   }
@@ -294,6 +302,7 @@ export class ProductService implements OnModuleInit {
     }).catch(this.handleNotFound);
 
     await this.searchService.indexProduct(product);
+    await this.emitStatusChangedEvent(payload.productId, PRODUCT_STATUS.SOLD);
   }
 
   async hide(
@@ -310,6 +319,7 @@ export class ProductService implements OnModuleInit {
     }).catch(this.handleNotFound);
 
     await this.searchService.indexProduct(product);
+    await this.emitStatusChangedEvent(payload.id, PRODUCT_STATUS.HIDDEN);
 
     return this.toResponse(product);
   }
@@ -339,5 +349,56 @@ export class ProductService implements OnModuleInit {
       count: products.length,
       items: products.map(this.toResponse),
     };
+  }
+
+  async findByIds(
+    payload: FindProductsByIdsPayload,
+  ): Promise<ProductInfoResponse[]> {
+    const items = await this.prisma.product.findMany({
+      where: {
+        id: { in: payload.ids },
+        status: { in: [PRODUCT_STATUS.ON_SALE, PRODUCT_STATUS.SOLD] },
+      },
+      select: productSelect,
+    });
+
+    const itemsMap = new Map<string, ProductInfoResponse>();
+    for (const p of items) {
+      itemsMap.set(p.id, this.toResponse(p));
+    }
+
+    return payload.ids.map(i => itemsMap.get(i));
+  }
+
+  async putForSale(
+    payload: PutProductForSalePayload,
+    jwtPayload: AuthTokenPayload,
+  ): Promise<ProductInfoResponse> {
+    const product = await this.prisma.product.update({
+      where: {
+        id: payload.productId,
+        sellerId: jwtPayload.userId,
+      },
+      data: { status: PRODUCT_STATUS.ON_SALE },
+      select: productSelect,
+    }).catch(this.handleNotFound);
+
+    await this.searchService.indexProduct(product);
+    await this.emitStatusChangedEvent(payload.productId, PRODUCT_STATUS.ON_SALE);
+
+    return this.toResponse(product);
+  }
+
+  private async emitStatusChangedEvent(
+    productId: string,
+    newStatus: ProductStatus,
+  ): Promise<void> {
+    await firstValueFrom(this.userClient.emit<void, ProductStatusChangedPayload>(
+      USER_PATTERNS.WISHLIST.PRODUCT_STATUS_CHANGED,
+      {
+        newStatus,
+        productId,
+      },
+    ));
   }
 }

@@ -2,6 +2,7 @@ import { AddressModule } from "./address/address.module";
 import { SellerApplicationModule } from "./seller-application/seller-application.module";
 import { StoreModule } from "./store/store.module";
 import { UserModule } from "./user/user.module";
+import { WishlistModule } from "./wishlist/wishlist.module";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { APP_GUARD } from "@nestjs/core";
@@ -35,6 +36,7 @@ export const validationSchema = Joi.object({
     SellerApplicationModule,
     StoreModule,
     AddressModule,
+    WishlistModule,
   ],
   providers: [
     {

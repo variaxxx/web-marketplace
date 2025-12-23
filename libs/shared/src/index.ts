@@ -11,3 +11,4 @@ export * from "./lib/seller-application/";
 export * from "./lib/services.names";
 export * from "./lib/store/";
 export * from "./lib/user/";
+export * from "./lib/wishlist/";

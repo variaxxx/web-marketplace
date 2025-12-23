@@ -4,7 +4,7 @@ import { BaseRpcController } from "../base-rpc.controller";
 import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Patch, Post, Query, UploadedFiles, UseInterceptors } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { FilesInterceptor } from "@nestjs/platform-express";
-import { CreateProductDto, CreateProductPayload, DeleteProductPayload, EditProductDto, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, HideProductPayload, MicroserviceName, PRODUCT_PATTERNS, ProductInfoResponse, ProductSearchPayload } from "@web-marketplace/shared";
+import { CreateProductDto, CreateProductPayload, DeleteProductPayload, EditProductDto, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, HideProductPayload, MicroserviceName, PRODUCT_PATTERNS, ProductInfoResponse, ProductSearchPayload, PutProductForSalePayload } from "@web-marketplace/shared";
 
 @Controller("product")
 export class ProductController extends BaseRpcController {
@@ -161,7 +161,7 @@ export class ProductController extends BaseRpcController {
   }
 
   @Post(":productId/hide")
-  @HttpCode(HttpStatus.NO_CONTENT)
+  @HttpCode(HttpStatus.OK)
   async hide(
     @AccessToken() accessToken: string,
     @Param("productId") productId: string,
@@ -171,6 +171,22 @@ export class ProductController extends BaseRpcController {
       PRODUCT_PATTERNS.PRODUCT.HIDE,
       {
         id: productId,
+        accessToken,
+      },
+    );
+  }
+
+  @Post(":productId/putForSale")
+  @HttpCode(HttpStatus.OK)
+  async putForSale(
+    @AccessToken() accessToken: string,
+    @Param("productId") productId: string,
+  ): Promise<ProductInfoResponse> {
+    return await this.send<PutProductForSalePayload, ProductInfoResponse>(
+      this.productClient,
+      PRODUCT_PATTERNS.PRODUCT.PUT_FOR_SALE,
+      {
+        productId,
         accessToken,
       },
     );

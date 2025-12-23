@@ -9,6 +9,8 @@ import { JwtModule } from "@nestjs/jwt";
 import Joi from "joi";
 
 export enum EnvKey {
+  ACCESS_JWT_SECRET = "ACCESS_JWT_SECRET",
+  RMQ_URL = "RMQ_URL",
   ES_NODE = "ES_NODE",
   ES_USERNAME = "ES_USERNAME",
   ES_PASSWORD = "ES_PASSWORD",
@@ -19,6 +21,8 @@ export enum EnvKey {
 }
 
 export const validationSchema = Joi.object({
+  [EnvKey.ACCESS_JWT_SECRET]: Joi.string().required(),
+  [EnvKey.RMQ_URL]: Joi.string().required(),
   [EnvKey.ES_NODE]: Joi.string().required(),
   [EnvKey.ES_USERNAME]: Joi.string().required(),
   [EnvKey.ES_PASSWORD]: Joi.string().required(),

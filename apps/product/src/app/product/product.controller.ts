@@ -1,7 +1,7 @@
 import { ProductService } from "./product.service";
 import { Controller } from "@nestjs/common";
 import { EventPattern, MessagePattern, Payload } from "@nestjs/microservices";
-import { AuthTokenPayload, CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, HideProductPayload, IsPublic, JwtPayload, MarkAsSoldProductPayload, PRODUCT_PATTERNS, ProductInfoResponse, RpcAllowedRoles, UserRole } from "@web-marketplace/shared";
+import { AuthTokenPayload, CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, FindProductsByIdsPayload, HideProductPayload, IsPublic, JwtPayload, MarkAsSoldProductPayload, PRODUCT_PATTERNS, ProductInfoResponse, PutProductForSalePayload, RpcAllowedRoles, UserRole } from "@web-marketplace/shared";
 
 @Controller()
 export class ProductController {
@@ -46,6 +46,15 @@ export class ProductController {
   }
 
   @RpcAllowedRoles(UserRole.SELLER)
+  @MessagePattern(PRODUCT_PATTERNS.PRODUCT.PUT_FOR_SALE)
+  async putForSale(
+    @Payload() payload: PutProductForSalePayload,
+    @JwtPayload() jwtPayload: AuthTokenPayload,
+  ): Promise<ProductInfoResponse> {
+    return await this.productService.putForSale(payload, jwtPayload);
+  }
+
+  @RpcAllowedRoles(UserRole.SELLER)
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.FIND_MY)
   async findMy(
     @Payload() payload: FindMyProductsPayload,
@@ -76,5 +85,13 @@ export class ProductController {
     @Payload() payload: MarkAsSoldProductPayload,
   ): Promise<void> {
     return await this.productService.markAsSold(payload);
+  }
+
+  @IsPublic()
+  @MessagePattern(PRODUCT_PATTERNS.PRODUCT.FIND_BY_IDS)
+  async findByIds(
+    @Payload() payload: FindProductsByIdsPayload,
+  ): Promise<ProductInfoResponse[]> {
+    return await this.productService.findByIds(payload);
   }
 }

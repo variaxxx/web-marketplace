@@ -26,4 +26,10 @@ export const USER_PATTERNS = {
     FIND_ONE: "user.find-one-address",
     FIND_MANY: "user.find-many-addresses",
   },
+  WISHLIST: {
+    ADD_ITEM: "wishlist.add-item",
+    FIND_MANY_ITEMS: "wishlist.find-many-items",
+    REMOVE_ITEM: "wishlist.remove-item",
+    PRODUCT_STATUS_CHANGED: "wishlist.product-status-changed",
+  },
 };

@@ -1,26 +1,24 @@
-import { MinioModule } from "../../db/minio.module";
+import { MicroserviceName, MicroserviceRMQQueue } from "../../../../../libs/shared/src";
 import { PrismaModule } from "../../db/prisma.module";
 import { EnvKey } from "../app.module";
-import { SearchModule } from "../search/search.module";
-import { ProductController } from "./product.controller";
-import { ProductService } from "./product.service";
+import { WishlistController } from "./wishlist.controller";
+import { WishlistService } from "./wishlist.service";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ClientProvider, ClientsModule, Transport } from "@nestjs/microservices";
-import { MicroserviceName, MicroserviceRMQQueue } from "@web-marketplace/shared";
 
 @Module({
   imports: [
     ClientsModule.registerAsync([
       {
-        name: MicroserviceName.USER_SERVICE,
+        name: MicroserviceName.PRODUCT_SERVICE,
         imports: [ConfigModule],
         inject: [ConfigService],
         useFactory: (config: ConfigService): Promise<ClientProvider> | ClientProvider => ({
           transport: Transport.RMQ,
           options: {
             urls: [config.getOrThrow<string>(EnvKey.RMQ_URL)],
-            queue: MicroserviceRMQQueue.USER_SERVICE,
+            queue: MicroserviceRMQQueue.PRODUCT_SERVICE,
             queueOptions: {
               durable: true,
             },
@@ -29,10 +27,12 @@ import { MicroserviceName, MicroserviceRMQQueue } from "@web-marketplace/shared"
       },
     ]),
     PrismaModule,
-    SearchModule,
-    MinioModule,
   ],
-  controllers: [ProductController],
-  providers: [ProductService],
+  controllers: [
+    WishlistController,
+  ],
+  providers: [
+    WishlistService,
+  ],
 })
-export class ProductModule {};
+export class WishlistModule {};

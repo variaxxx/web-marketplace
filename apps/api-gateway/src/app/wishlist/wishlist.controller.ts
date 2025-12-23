@@ -1,0 +1,77 @@
+import { AccessToken } from "../../common/decorators/access-token.decorator";
+import { BaseRpcController } from "../base-rpc.controller";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Post, Query } from "@nestjs/common";
+import { ClientProxy } from "@nestjs/microservices";
+import { AddWishlistItemDto, AddWishlistItemPayload, FindManyApiResponse, FindManyWishlistItemsPayload, FindProductsByIdsPayload, MicroserviceName, PRODUCT_PATTERNS, ProductInfoResponse, RemoveWishlistItemPayload, USER_PATTERNS } from "@web-marketplace/shared";
+
+@Controller("wishlist")
+export class WishlistController extends BaseRpcController {
+  constructor(
+    @Inject(MicroserviceName.USER_SERVICE) private readonly userClient: ClientProxy,
+    @Inject(MicroserviceName.PRODUCT_SERVICE) private readonly productClient: ClientProxy,
+  ) {
+    super();
+  }
+
+  @Post()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async addItem(
+    @Body() dto: AddWishlistItemDto,
+    @AccessToken() accessToken: string,
+  ): Promise<void> {
+    return void await this.send<AddWishlistItemPayload, boolean>(
+      this.userClient,
+      USER_PATTERNS.WISHLIST.ADD_ITEM,
+      {
+        accessToken,
+        ...dto,
+      },
+    );
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  async findItems(
+    @AccessToken() accessToken: string,
+    @Query("offset") offset?: number,
+    @Query("limit") limit?: number,
+  ): Promise<FindManyApiResponse<ProductInfoResponse>> {
+    const itemsIds = await this.send<FindManyWishlistItemsPayload, FindManyApiResponse<string>>(
+      this.userClient,
+      USER_PATTERNS.WISHLIST.FIND_MANY_ITEMS,
+      {
+        accessToken,
+        limit,
+        offset,
+      },
+    );
+
+    const items = await this.send<FindProductsByIdsPayload, ProductInfoResponse[]>(
+      this.productClient,
+      PRODUCT_PATTERNS.PRODUCT.FIND_BY_IDS,
+      { ids: itemsIds.items },
+    );
+
+    return {
+      count: itemsIds.count,
+      total: itemsIds.total,
+      items,
+    };
+  }
+
+  @Delete(":productId")
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteItem(
+    @Param("productId") productId: string,
+    @AccessToken() accessToken: string,
+  ): Promise<void> {
+    return void await this.send<RemoveWishlistItemPayload, boolean>(
+      this.userClient,
+      USER_PATTERNS.WISHLIST.REMOVE_ITEM,
+      {
+        accessToken,
+        productId,
+      },
+    );
+  }
+}

@@ -5,6 +5,7 @@ import { ProductController } from "./product/product.controller";
 import { SellerApplicationController } from "./seller-application/seller-application.controller";
 import { StoreController } from "./store/store.controller";
 import { UserController } from "./user/user.controller";
+import { WishlistController } from "./wishlist/wishlist.controller";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ClientProvider, ClientsModule, Transport } from "@nestjs/microservices";
@@ -101,6 +102,7 @@ export const validationSchema = Joi.object({
     StoreController,
     ProductController,
     CategoryController,
+    WishlistController,
   ],
 })
 export class AppModule {}

@@ -16,11 +16,11 @@ model User {
 
   phone    String?
   name     String?
-  avatarId String?
+  avatarId String? @map("avatar_id")
 
   wishlist  WishlistItem[]
   addresses Address[]
-  Store     Store[]
+  store     Store[]
 
   @@map("users")
 }
@@ -30,7 +30,7 @@ model Store {
 
   name        String
   description String
-  avatarId    String?
+  avatarId    String? @map("avatar_id")
 
   owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
 
@@ -38,14 +38,14 @@ model Store {
 }
 
 model WishlistItem {
-  id String @id @default(uuid())
-
   createdAt DateTime @default(now()) @map("created_at")
 
-  productId String
-  userId    String @map("user_id")
-  user      User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productStatus ProductStatus
+  productId     String        @map("product_id")
+  userId        String        @map("user_id")
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@id([productId, userId])
   @@map("wishlist_items")
 }
 
@@ -78,8 +78,8 @@ model SellerApplication {
   status SellerApplicationStatus @default(PENDING)
   note   String?
 
-  storeName        String
-  storeDescription String
+  storeName        String @map("store_name")
+  storeDescription String @map("store_description")
 
   @@map("seller_applications")
 }
@@ -89,4 +89,11 @@ enum SellerApplicationStatus {
   SUCCESS
   DECLINED
   CANCELLED
+}
+
+enum ProductStatus {
+  REMOVED
+  HIDDEN
+  ON_SALE
+  SOLD
 }
