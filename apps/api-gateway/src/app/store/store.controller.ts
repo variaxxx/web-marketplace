@@ -66,7 +66,12 @@ export class StoreController extends BaseRpcController {
       USER_PATTERNS.STORE.SET_STORE_PICTURE,
       {
         accessToken,
-        image: image.buffer,
+        image: {
+          buffer: image.buffer,
+          mimetype: image.mimetype,
+          originalName: image.originalname,
+          size: image.size,
+        },
       },
     );
   }

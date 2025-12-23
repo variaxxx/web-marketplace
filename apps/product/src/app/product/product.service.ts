@@ -98,6 +98,7 @@ export class ProductService implements OnModuleInit {
         this.picturesBucketName,
         randomUUID(),
         Buffer.from(image.buffer),
+        image.mimetype,
       );
 
       files.push({
@@ -199,6 +200,7 @@ export class ProductService implements OnModuleInit {
         this.picturesBucketName,
         randomUUID(),
         Buffer.from(image.buffer),
+        image.mimetype,
       );
 
       files.push({
@@ -219,13 +221,12 @@ export class ProductService implements OnModuleInit {
         lastFile < files.length
         && (
           !oldPictures[i]
-          || !payload.existingImages.includes(oldPictures[i].url,
-          )
+          || !payload.existingImages.includes(oldPictures[i].url)
         )
       ) {
         files[lastFile].order = oldPictures[i].order ?? lastOrder + 1;
-        files[lastFile++].isMain = oldPictures[i].isMain ?? false;
-        lastOrder = files[lastFile].order;
+        files[lastFile].isMain = oldPictures[i].isMain ?? false;
+        lastOrder = files[lastFile++].order;
       }
     }
 

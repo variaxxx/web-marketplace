@@ -70,7 +70,8 @@ export class StoreService {
     if (oldStore.avatarId)
       await this.removeFile(oldStore.avatarId);
     const filename = await this.uploadFile(
-      Buffer.from(payload.image),
+      Buffer.from(payload.image.buffer),
+      payload.image.mimetype,
     );
 
     const store = await this.prisma.store.update({
@@ -95,12 +96,16 @@ export class StoreService {
     return `${this.bucketName}/${filename}`;
   }
 
-  private async uploadFile(file: Buffer): Promise<any> {
+  private async uploadFile(
+    file: Buffer,
+    mimetype: string,
+  ): Promise<any> {
     const filename = randomUUID().toString();
     await this.minio.upload(
       this.bucketName,
       filename,
       file,
+      mimetype,
     );
     return filename;
   }

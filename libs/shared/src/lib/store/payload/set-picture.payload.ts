@@ -1,8 +1,11 @@
-import { IsBuffer } from "../../common/validators/is-buffer.validator";
+import { ImagePayload } from "../../image.payload";
 import { WithTokenPayload } from "../../with-token.payload";
-import { Buffer } from "node:buffer";
+import { Type } from "class-transformer";
+import { IsDefined, ValidateNested } from "class-validator";
 
 export class SetStorePicturePayload extends WithTokenPayload {
-  @IsBuffer()
-  image!: Buffer;
+  @IsDefined()
+  @ValidateNested()
+  @Type(() => ImagePayload)
+  image!: ImagePayload;
 }

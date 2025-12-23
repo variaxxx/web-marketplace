@@ -61,7 +61,12 @@ export class UserController extends BaseRpcController {
       USER_PATTERNS.USER.SET_PROFILE_PICTURE,
       {
         accessToken,
-        image: image.buffer,
+        image: {
+          buffer: image.buffer,
+          mimetype: image.mimetype,
+          originalName: image.originalname,
+          size: image.size,
+        },
       },
     );
   }

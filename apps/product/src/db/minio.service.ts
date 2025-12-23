@@ -25,16 +25,20 @@ export class MinioService implements OnModuleInit {
     this.logger.log("Minio client initialized");
   }
 
-  // TODO: mimetype
   async upload(
     bucket: string,
     objectName: string,
     buffer: Buffer,
+    mimetype: string,
   ): Promise<string> {
     await this.client.putObject(
       bucket,
       objectName,
       buffer,
+      buffer.length,
+      {
+        "Content-Type": mimetype,
+      },
     );
 
     return objectName;

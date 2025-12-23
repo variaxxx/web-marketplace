@@ -1,5 +1,5 @@
+import { ImagePayload } from "../../image.payload";
 import { WithTokenPayload } from "../../with-token.payload";
-import { ImagePayload } from "./image.payload";
 import { Type } from "class-transformer";
 import { ArrayMaxSize, IsArray, IsInt, IsOptional, IsPositive, IsString, IsUUID, MaxLength, MinLength, ValidateNested } from "class-validator";
 
