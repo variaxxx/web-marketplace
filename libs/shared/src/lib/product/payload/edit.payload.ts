@@ -1,9 +1,9 @@
+import { PayloadWithUserInfo } from "../../base.payload";
 import { ImagePayload } from "../../image.payload";
-import { WithTokenPayload } from "../../with-token.payload";
 import { Type } from "class-transformer";
 import { ArrayMaxSize, IsArray, IsInt, IsOptional, IsPositive, IsString, IsUUID, MaxLength, MinLength, ValidateNested } from "class-validator";
 
-export class EditProductPayload extends WithTokenPayload {
+export class EditProductPayload extends PayloadWithUserInfo {
   @IsUUID()
   id!: string;
 

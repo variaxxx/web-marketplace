@@ -1,9 +1,7 @@
 import { AuthModule } from "./auth/auth.module";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { APP_GUARD } from "@nestjs/core";
 import { JwtModule } from "@nestjs/jwt";
-import { RpcAuthGuard } from "@web-marketplace/shared";
 import Joi from "joi";
 
 export enum EnvKey {
@@ -25,12 +23,6 @@ export const validationSchema = Joi.object({
     JwtModule.register({ global: true }),
     ConfigModule.forRoot({ validationSchema, isGlobal: true }),
     AuthModule,
-  ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: RpcAuthGuard,
-    },
   ],
 })
 export class AppModule {}

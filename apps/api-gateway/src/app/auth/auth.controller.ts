@@ -1,3 +1,4 @@
+import { IsPublic } from "../../common/decorators/is-public.decorator";
 import { BaseRpcController } from "../base-rpc.controller";
 import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Inject, Post, Req, Res } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
@@ -13,6 +14,7 @@ export class AuthController extends BaseRpcController {
     super();
   }
 
+  @IsPublic()
   @Post("login")
   @HttpCode(HttpStatus.OK)
   async login(
@@ -36,6 +38,7 @@ export class AuthController extends BaseRpcController {
     this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
   }
 
+  @IsPublic()
   @Post("registration")
   @HttpCode(HttpStatus.CREATED)
   async registration(
@@ -77,6 +80,7 @@ export class AuthController extends BaseRpcController {
     this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
   }
 
+  @IsPublic()
   @Post("verifyEmail")
   @HttpCode(HttpStatus.OK)
   async verifyEmail(

@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/@prisma/generated/reviewClient"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("REVIEW_DATABASE_URL")
+}
+
+model SellerReview {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now())
+
+  rating  Int
+  comment String
+
+  sellerId     String       @map("seller_id")
+  sellerRating SellerRating @relation(fields: [sellerId], references: [sellerId])
+
+  relatedProductId   String? @map("related_product_id")
+  relatedProductName String? @map("related_product_name")
+
+  sellerReviewImages SellerReviewPicture[]
+
+  @@index([sellerId])
+  @@map("seller_reviews")
+}
+
+model SellerReviewPicture {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  reviewId String       @map("review_id")
+  review   SellerReview @relation(fields: [reviewId], references: [id])
+
+  url       String
+  sizeBytes Int    @map("size_bytes")
+  mimeType  String
+  order     Int    @default(0)
+
+  @@index([reviewId])
+  @@map("seller_review_pictures")
+}
+
+model SellerRating {
+  sellerId String @id
+
+  sum           Int
+  count         Int
+  sellerReviews SellerReview[]
+
+  @@map("sellers_rating")
+}

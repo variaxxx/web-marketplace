@@ -7,6 +7,8 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    networks:
+      - backend
 
   minio:
     image: minio/minio:latest
@@ -25,6 +27,8 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - backend
 
   auth-db:
     image: postgres:17
@@ -33,7 +37,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     networks:
-      - usersdomain
+      - backend
     healthcheck:
       test: ["CMD-SHELL", "su -c 'pg_isready -U postgres' postgres"]
       interval: 30s
@@ -49,7 +53,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     networks:
-      - usersdomain
+      - backend
     healthcheck:
       test: ["CMD-SHELL", "su -c 'pg_isready -U postgres' postgres"]
       interval: 30s
@@ -65,7 +69,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     networks:
-      - usersdomain
+      - backend
     healthcheck:
       test: ["CMD-SHELL", "su -c 'pg_isready -U postgres' postgres"]
       interval: 30s
@@ -74,9 +78,44 @@ services:
     ports:
       - "5435:5432"
 
+  review-db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "su -c 'pg_isready -U postgres' postgres"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    ports:
+      - "5436:5432"
+
+  review-redis:
+    image: redis:8.4.0
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_DATABASES: 16
+      REDIS_MAXMEMORY: 512mb
+      REDIS_APPENDONLY: "yes"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "$REDIS_PASSWORD", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "6380:6379"
+    networks:
+      - backend
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:9.2.0
-    container_name: elasticsearch
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -85,11 +124,16 @@ services:
       - ES_JAVA_OPTS=-Xms512m -Xmx512m
     ports:
       - 9200:9200
+    networks:
+      - backend
 
 networks:
-  usersdomain:
-  minio-network:
+  backend:
+    driver: bridge
 
 volumes:
   minio-data:
+    driver: local
+
+  redis-data:
     driver: local

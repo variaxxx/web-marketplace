@@ -1,7 +1,7 @@
-import { WithTokenPayload } from "../../with-token.payload";
+import { PayloadWithUserInfo } from "../../base.payload";
 import { IsInt, IsOptional, IsPositive } from "class-validator";
 
-export class FindManyWishlistItemsPayload extends WithTokenPayload {
+export class FindManyWishlistItemsPayload extends PayloadWithUserInfo {
   @IsInt()
   @IsPositive()
   @IsOptional()

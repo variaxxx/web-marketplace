@@ -8,6 +8,7 @@ export * from "./lib/mail/";
 export * from "./lib/patterns";
 export * from "./lib/product/";
 export * from "./lib/seller-application/";
+export * from "./lib/seller-review";
 export * from "./lib/services.names";
 export * from "./lib/store/";
 export * from "./lib/user/";

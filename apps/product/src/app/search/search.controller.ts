@@ -1,7 +1,7 @@
 import { SearchService } from "./search.service";
 import { Controller } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
-import { FindManyApiResponse, IsPublic, PRODUCT_PATTERNS, ProductInfoResponse, ProductSearchPayload } from "@web-marketplace/shared";
+import { FindManyApiResponse, PRODUCT_PATTERNS, ProductInfoResponse, ProductSearchPayload } from "@web-marketplace/shared";
 
 @Controller()
 export class SearchController {
@@ -9,7 +9,6 @@ export class SearchController {
     private readonly searchService: SearchService,
   ) {}
 
-  @IsPublic()
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.SEARCH)
   async search(
     @Payload() payload: ProductSearchPayload,

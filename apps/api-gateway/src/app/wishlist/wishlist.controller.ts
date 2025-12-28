@@ -1,8 +1,8 @@
-import { AccessToken } from "../../common/decorators/access-token.decorator";
+import { UserInfo } from "../../common/decorators/user-info.decorator";
 import { BaseRpcController } from "../base-rpc.controller";
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Post, Query } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
-import { AddWishlistItemDto, AddWishlistItemPayload, FindManyApiResponse, FindManyWishlistItemsPayload, FindProductsByIdsPayload, MicroserviceName, PRODUCT_PATTERNS, ProductInfoResponse, RemoveWishlistItemPayload, USER_PATTERNS } from "@web-marketplace/shared";
+import { AddWishlistItemDto, AddWishlistItemPayload, AuthTokenPayload, FindManyApiResponse, FindManyWishlistItemsPayload, FindProductsByIdsPayload, MicroserviceName, PRODUCT_PATTERNS, ProductInfoResponse, RemoveWishlistItemPayload, USER_PATTERNS } from "@web-marketplace/shared";
 
 @Controller("wishlist")
 export class WishlistController extends BaseRpcController {
@@ -17,13 +17,13 @@ export class WishlistController extends BaseRpcController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async addItem(
     @Body() dto: AddWishlistItemDto,
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
   ): Promise<void> {
     return void await this.send<AddWishlistItemPayload, boolean>(
       this.userClient,
       USER_PATTERNS.WISHLIST.ADD_ITEM,
       {
-        accessToken,
+        userInfo,
         ...dto,
       },
     );
@@ -32,7 +32,7 @@ export class WishlistController extends BaseRpcController {
   @Get()
   @HttpCode(HttpStatus.OK)
   async findItems(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Query("offset") offset?: number,
     @Query("limit") limit?: number,
   ): Promise<FindManyApiResponse<ProductInfoResponse>> {
@@ -40,7 +40,7 @@ export class WishlistController extends BaseRpcController {
       this.userClient,
       USER_PATTERNS.WISHLIST.FIND_MANY_ITEMS,
       {
-        accessToken,
+        userInfo,
         limit,
         offset,
       },
@@ -63,13 +63,13 @@ export class WishlistController extends BaseRpcController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteItem(
     @Param("productId") productId: string,
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
   ): Promise<void> {
     return void await this.send<RemoveWishlistItemPayload, boolean>(
       this.userClient,
       USER_PATTERNS.WISHLIST.REMOVE_ITEM,
       {
-        accessToken,
+        userInfo,
         productId,
       },
     );

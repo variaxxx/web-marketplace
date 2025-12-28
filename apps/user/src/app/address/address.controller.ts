@@ -1,7 +1,7 @@
 import { AddressService } from "./address.service";
 import { Controller } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
-import { AddAddressPayload, AddressInfoResponse, AuthTokenPayload, DeleteAddressPayload, EditAddressPayload, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, JwtPayload, USER_PATTERNS } from "@web-marketplace/shared";
+import { AddAddressPayload, AddressInfoResponse, DeleteAddressPayload, EditAddressPayload, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, USER_PATTERNS } from "@web-marketplace/shared";
 
 @Controller()
 export class AddressController {
@@ -12,40 +12,35 @@ export class AddressController {
   @MessagePattern(USER_PATTERNS.ADDRESS.ADD)
   async add(
     @Payload() payload: AddAddressPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<AddressInfoResponse> {
-    return await this.addressService.add(payload, jwtPayload);
+    return await this.addressService.add(payload);
   }
 
   @MessagePattern(USER_PATTERNS.ADDRESS.EDIT)
   async edit(
     @Payload() payload: EditAddressPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<AddressInfoResponse> {
-    return await this.addressService.edit(payload, jwtPayload);
+    return await this.addressService.edit(payload);
   }
 
   @MessagePattern(USER_PATTERNS.ADDRESS.DELETE)
   async delete(
     @Payload() payload: DeleteAddressPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<AddressInfoResponse> {
-    return await this.addressService.delete(payload, jwtPayload);
+    return await this.addressService.delete(payload);
   }
 
   @MessagePattern(USER_PATTERNS.ADDRESS.FIND_ONE)
   async findOne(
     @Payload() payload: FindOneAddressPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<AddressInfoResponse> {
-    return await this.addressService.findOne(payload, jwtPayload);
+    return await this.addressService.findOne(payload);
   }
 
   @MessagePattern(USER_PATTERNS.ADDRESS.FIND_MANY)
   async findMany(
     @Payload() payload: FindManyAddressesPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<FindManyApiResponse<AddressInfoResponse>> {
-    return await this.addressService.findMany(payload, jwtPayload);
+    return await this.addressService.findMany(payload);
   }
 }

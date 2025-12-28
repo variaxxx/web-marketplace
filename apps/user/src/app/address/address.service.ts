@@ -1,7 +1,7 @@
 import { PrismaService } from "../../db/prisma.service";
 import { Injectable } from "@nestjs/common";
 import { RpcException } from "@nestjs/microservices";
-import { AddAddressPayload, AddressInfoResponse, AuthTokenPayload, DeleteAddressPayload, EditAddressPayload, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, UserRole } from "@web-marketplace/shared";
+import { AddAddressPayload, AddressInfoResponse, DeleteAddressPayload, EditAddressPayload, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, USER_ROLE } from "@web-marketplace/shared";
 
 @Injectable()
 export class AddressService {
@@ -22,11 +22,10 @@ export class AddressService {
 
   async add(
     payload: AddAddressPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<AddressInfoResponse> {
     const address = await this.prisma.address.create({
       data: {
-        userId: jwtPayload.userId,
+        userId: payload.userInfo.userId,
         city: payload.city,
         street: payload.street,
         house: payload.house,
@@ -46,16 +45,15 @@ export class AddressService {
 
   async edit(
     payload: EditAddressPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<AddressInfoResponse> {
     const address = await this.prisma.address.update({
       where: {
         id: payload.addressId,
-        userId: jwtPayload.userId,
+        userId: payload.userInfo.userId,
         isDeleted: false,
       },
       data: {
-        userId: jwtPayload.userId,
+        userId: payload.userInfo.userId,
         city: payload.city,
         street: payload.street,
         house: payload.house,
@@ -83,12 +81,11 @@ export class AddressService {
 
   async delete(
     payload: DeleteAddressPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<AddressInfoResponse> {
     const address = await this.prisma.address.update({
       where: {
         id: payload.addressId,
-        userId: jwtPayload.userId,
+        userId: payload.userInfo.userId,
         isDeleted: false,
       },
       data: {
@@ -114,7 +111,6 @@ export class AddressService {
 
   async findOne(
     payload: FindOneAddressPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<AddressInfoResponse> {
     const address = await this.prisma.address.findUnique({
       where: { id: payload.addressId },
@@ -128,8 +124,8 @@ export class AddressService {
     if (
       !address
       || (
-        jwtPayload.role !== UserRole.ADMIN
-        && (jwtPayload.userId !== address.userId || address.isDeleted))) {
+        payload.userInfo.role !== USER_ROLE.ADMIN
+        && (payload.userInfo.userId !== address.userId || address.isDeleted))) {
       throw new RpcException({
         status: 404,
         message: "Address not found",
@@ -150,10 +146,9 @@ export class AddressService {
 
   async findMany(
     payload: FindManyAddressesPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<FindManyApiResponse<AddressInfoResponse>> {
     const where: any = {
-      userId: jwtPayload.userId,
+      userId: payload.userInfo.userId,
       isDeleted: false,
     };
 

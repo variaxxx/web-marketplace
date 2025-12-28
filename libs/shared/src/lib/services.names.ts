@@ -3,6 +3,7 @@ export enum MicroserviceName {
   MAIL_SERVICE = "MAIL_SERVICE",
   USER_SERVICE = "USER_SERVICE",
   PRODUCT_SERVICE = "PRODUCT_SERVICE",
+  REVIEW_SERVICE = "REVIEW_SERVICE",
 }
 
 export enum MicroserviceRMQQueue {
@@ -10,4 +11,5 @@ export enum MicroserviceRMQQueue {
   MAIL_SERVICE = "mail_queue",
   USER_SERVICE = "user_queue",
   PRODUCT_SERVICE = "product_queue",
+  REVIEW_SERVICE = "review_queue",
 }

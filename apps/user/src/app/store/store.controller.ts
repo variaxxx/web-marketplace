@@ -1,7 +1,7 @@
 import { StoreService } from "./store.service";
 import { Controller } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
-import { AuthTokenPayload, FindMyStorePayload, FindOneStorePayload, IsPublic, JwtPayload, RpcAllowedRoles, SetStorePicturePayload, StoreInfoResponse, USER_PATTERNS, UserRole } from "@web-marketplace/shared";
+import { FindMyStorePayload, FindOneStorePayload, SetStorePicturePayload, StoreInfoResponse, USER_PATTERNS } from "@web-marketplace/shared";
 
 @Controller()
 export class StoreController {
@@ -9,7 +9,6 @@ export class StoreController {
     private readonly storeService: StoreService,
   ) {}
 
-  @IsPublic()
   @MessagePattern(USER_PATTERNS.STORE.GET_INFO)
   async getInfo(
     @Payload() payload: FindOneStorePayload,
@@ -17,23 +16,19 @@ export class StoreController {
     return await this.storeService.getInfo(payload);
   }
 
-  @RpcAllowedRoles(UserRole.SELLER)
   @MessagePattern(USER_PATTERNS.STORE.GET_MY)
   async getMyStore(
     @Payload() payload: FindMyStorePayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<StoreInfoResponse> {
     return await this.storeService.getInfo({
-      ownerId: jwtPayload.userId,
+      ownerId: payload.userInfo.userId,
     });
   }
 
-  @RpcAllowedRoles(UserRole.SELLER)
   @MessagePattern(USER_PATTERNS.STORE.SET_STORE_PICTURE)
   async setStorePicture(
     @Payload() payload: SetStorePicturePayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<StoreInfoResponse> {
-    return await this.storeService.setStorePicture(payload, jwtPayload);
+    return await this.storeService.setStorePicture(payload);
   }
 }

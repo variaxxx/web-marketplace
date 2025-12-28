@@ -1,9 +1,9 @@
+import { PayloadWithUserInfo } from "../../base.payload";
 import { ImagePayload } from "../../image.payload";
-import { WithTokenPayload } from "../../with-token.payload";
 import { Type } from "class-transformer";
 import { IsDefined, ValidateNested } from "class-validator";
 
-export class SetProfilePicturePayload extends WithTokenPayload {
+export class SetProfilePicturePayload extends PayloadWithUserInfo {
   @IsDefined()
   @ValidateNested()
   @Type(() => ImagePayload)

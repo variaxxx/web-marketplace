@@ -1,7 +1,7 @@
-import { WithTokenPayload } from "../../with-token.payload";
+import { PayloadWithUserInfo } from "../../base.payload";
 import { IsString, MaxLength, MinLength } from "class-validator";
 
-export class CreateSellerApplicationPayload extends WithTokenPayload {
+export class CreateSellerApplicationPayload extends PayloadWithUserInfo {
   @IsString()
   @MinLength(3)
   @MaxLength(50)

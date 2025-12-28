@@ -1,10 +1,11 @@
-import { AccessToken } from "../../common/decorators/access-token.decorator";
+import { IsPublic } from "../../common/decorators/is-public.decorator";
+import { UserInfo } from "../../common/decorators/user-info.decorator";
 import { pictureFileFilter } from "../../common/filters/picture-file.filter";
 import { BaseRpcController } from "../base-rpc.controller";
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Patch, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { AddAddressDto, AddAddressPayload, AddressInfoResponse, DeleteAddressPayload, EditAddressDto, EditAddressPayload, EditUserInfoDto, EditUserInfoPayload, FindManyAddressesDto, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, GetMePayload, GetUserInfoPayload, MicroserviceName, SetProfilePicturePayload, USER_PATTERNS, UserInfoResponse } from "@web-marketplace/shared";
+import { AddAddressDto, AddAddressPayload, AddressInfoResponse, AuthTokenPayload, DeleteAddressPayload, EditAddressDto, EditAddressPayload, EditUserInfoDto, EditUserInfoPayload, FindManyAddressesDto, FindManyAddressesPayload, FindManyApiResponse, FindOneAddressPayload, GetMePayload, GetUserInfoPayload, MicroserviceName, SetProfilePicturePayload, USER_PATTERNS, UserInfoResponse } from "@web-marketplace/shared";
 
 @Controller("user")
 export class UserController extends BaseRpcController {
@@ -17,14 +18,14 @@ export class UserController extends BaseRpcController {
   @HttpCode(HttpStatus.OK)
   @Patch("me")
   async editInfo(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Body() dto: EditUserInfoDto,
   ): Promise<UserInfoResponse> {
     return await this.send<EditUserInfoPayload, UserInfoResponse>(
       this.userClient,
       USER_PATTERNS.USER.EDIT_INFO,
       {
-        accessToken,
+        userInfo,
         ...dto,
       },
     );
@@ -33,13 +34,13 @@ export class UserController extends BaseRpcController {
   @HttpCode(HttpStatus.OK)
   @Get("me")
   async getMe(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
   ): Promise<UserInfoResponse> {
     return await this.send<GetMePayload, UserInfoResponse>(
       this.userClient,
       USER_PATTERNS.USER.GET_ME,
       {
-        accessToken,
+        userInfo,
       },
     );
   }
@@ -53,14 +54,14 @@ export class UserController extends BaseRpcController {
     fileFilter: pictureFileFilter,
   }))
   async setPfp(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @UploadedFile() image: Express.Multer.File,
   ): Promise<UserInfoResponse> {
     return await this.send<SetProfilePicturePayload, UserInfoResponse>(
       this.userClient,
       USER_PATTERNS.USER.SET_PROFILE_PICTURE,
       {
-        accessToken,
+        userInfo,
         image: {
           buffer: image.buffer,
           mimetype: image.mimetype,
@@ -74,14 +75,14 @@ export class UserController extends BaseRpcController {
   @HttpCode(HttpStatus.CREATED)
   @Post("address")
   async addAddress(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Body() dto: AddAddressDto,
   ): Promise<AddressInfoResponse> {
     return await this.send<AddAddressPayload, AddressInfoResponse>(
       this.userClient,
       USER_PATTERNS.ADDRESS.ADD,
       {
-        accessToken,
+        userInfo,
         ...dto,
       },
     );
@@ -90,7 +91,7 @@ export class UserController extends BaseRpcController {
   @HttpCode(HttpStatus.OK)
   @Patch("address/:id")
   async editAddress(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Param("id") id: string,
     @Body() dto: EditAddressDto,
   ): Promise<AddressInfoResponse> {
@@ -98,7 +99,7 @@ export class UserController extends BaseRpcController {
       this.userClient,
       USER_PATTERNS.ADDRESS.EDIT,
       {
-        accessToken,
+        userInfo,
         ...dto,
         addressId: id,
       },
@@ -108,14 +109,14 @@ export class UserController extends BaseRpcController {
   @HttpCode(HttpStatus.OK)
   @Delete("address/:id")
   async deleteAddress(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Param("id") id: string,
   ): Promise<AddressInfoResponse> {
     return await this.send<DeleteAddressPayload, AddressInfoResponse>(
       this.userClient,
       USER_PATTERNS.ADDRESS.DELETE,
       {
-        accessToken,
+        userInfo,
         addressId: id,
       },
     );
@@ -124,14 +125,14 @@ export class UserController extends BaseRpcController {
   @HttpCode(HttpStatus.OK)
   @Get("address/:id")
   async findAddress(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Param("id") id: string,
   ): Promise<AddressInfoResponse> {
     return await this.send<FindOneAddressPayload, AddressInfoResponse>(
       this.userClient,
       USER_PATTERNS.ADDRESS.FIND_ONE,
       {
-        accessToken,
+        userInfo,
         addressId: id,
       },
     );
@@ -140,31 +141,32 @@ export class UserController extends BaseRpcController {
   @HttpCode(HttpStatus.OK)
   @Get("addresses")
   async findManyAddresses(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Body() dto: FindManyAddressesDto,
   ): Promise<FindManyApiResponse<AddressInfoResponse>> {
     return await this.send<FindManyAddressesPayload, FindManyApiResponse<AddressInfoResponse>>(
       this.userClient,
       USER_PATTERNS.ADDRESS.FIND_MANY,
       {
-        accessToken,
+        userInfo,
         ...dto,
       },
     );
   }
 
+  @IsPublic()
   @HttpCode(HttpStatus.OK)
   @Get(":id")
   async getInfo(
-    @AccessToken() accessToken: string,
     @Param("id") id: string,
+    @UserInfo(true) userInfo?: AuthTokenPayload,
   ): Promise<UserInfoResponse> {
     return await this.send<GetUserInfoPayload, UserInfoResponse>(
       this.userClient,
       USER_PATTERNS.USER.GET_INFO,
       {
         userId: id,
-        accessToken,
+        userInfo,
       },
     );
   }

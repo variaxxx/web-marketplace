@@ -1,3 +1,3 @@
-import { WithTokenPayload } from "../../with-token.payload";
+import { PayloadWithUserInfo } from "../../base.payload";
 
-export class FindMyStorePayload extends WithTokenPayload {}
+export class FindMyStorePayload extends PayloadWithUserInfo {}

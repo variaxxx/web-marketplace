@@ -1,7 +1,7 @@
 import { ProductService } from "./product.service";
 import { Controller } from "@nestjs/common";
 import { EventPattern, MessagePattern, Payload } from "@nestjs/microservices";
-import { AuthTokenPayload, CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, FindProductsByIdsPayload, HideProductPayload, IsPublic, JwtPayload, MarkAsSoldProductPayload, PRODUCT_PATTERNS, ProductInfoResponse, PutProductForSalePayload, RpcAllowedRoles, UserRole } from "@web-marketplace/shared";
+import { CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, FindProductsByIdsPayload, HideProductPayload, MarkAsSoldProductPayload, PRODUCT_PATTERNS, ProductInfoResponse, PutProductForSalePayload } from "@web-marketplace/shared";
 
 @Controller()
 export class ProductController {
@@ -9,61 +9,48 @@ export class ProductController {
     private readonly productService: ProductService,
   ) {}
 
-  @RpcAllowedRoles(UserRole.SELLER)
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.CREATE)
   async create(
     @Payload() payload: CreateProductPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
-    return await this.productService.create(payload, jwtPayload);
+    return await this.productService.create(payload);
   }
 
-  @RpcAllowedRoles(UserRole.SELLER)
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.EDIT)
   async edit(
     @Payload() payload: EditProductPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
-    return await this.productService.edit(payload, jwtPayload);
+    return await this.productService.edit(payload);
   }
 
-  @RpcAllowedRoles(UserRole.SELLER)
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.DELETE)
   async delete(
     @Payload() payload: DeleteProductPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
-    return await this.productService.delete(payload, jwtPayload);
+    return await this.productService.delete(payload);
   }
 
-  @RpcAllowedRoles(UserRole.SELLER)
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.HIDE)
   async hide(
     @Payload() payload: HideProductPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
-    return await this.productService.hide(payload, jwtPayload);
+    return await this.productService.hide(payload);
   }
 
-  @RpcAllowedRoles(UserRole.SELLER)
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.PUT_FOR_SALE)
   async putForSale(
     @Payload() payload: PutProductForSalePayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
-    return await this.productService.putForSale(payload, jwtPayload);
+    return await this.productService.putForSale(payload);
   }
 
-  @RpcAllowedRoles(UserRole.SELLER)
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.FIND_MY)
   async findMy(
     @Payload() payload: FindMyProductsPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<FindManyApiResponse> {
-    return await this.productService.findMy(payload, jwtPayload);
+    return await this.productService.findMy(payload);
   }
 
-  @IsPublic()
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.FIND_ONE)
   async findOne(
     @Payload() payload: FindOneProductPayload,
@@ -71,7 +58,6 @@ export class ProductController {
     return await this.productService.findOne(payload);
   }
 
-  @IsPublic()
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.FIND_MANY)
   async findMany(
     @Payload() payload: FindManyProductsPayload,
@@ -79,7 +65,6 @@ export class ProductController {
     return await this.productService.findMany(payload);
   }
 
-  @IsPublic()
   @EventPattern(PRODUCT_PATTERNS.PRODUCT.MARK_AS_SOLD)
   async markAsSold(
     @Payload() payload: MarkAsSoldProductPayload,
@@ -87,7 +72,6 @@ export class ProductController {
     return await this.productService.markAsSold(payload);
   }
 
-  @IsPublic()
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.FIND_BY_IDS)
   async findByIds(
     @Payload() payload: FindProductsByIdsPayload,

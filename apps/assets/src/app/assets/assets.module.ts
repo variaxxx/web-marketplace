@@ -1,5 +1,5 @@
 import { AssetsController } from "./assets.controller";
-import { MINIO_TOKEN } from "./minio.decorator";
+import { MINIO_TOKEN } from "./assets.decorator";
 import { Global, Module } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { Client } from "minio";

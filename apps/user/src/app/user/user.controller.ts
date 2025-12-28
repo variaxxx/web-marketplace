@@ -1,7 +1,7 @@
 import { UserService } from "./user.service";
 import { Controller } from "@nestjs/common";
 import { EventPattern, MessagePattern, Payload } from "@nestjs/microservices";
-import { AuthTokenPayload, CreateUserPayload, EditUserInfoPayload, GetMePayload, GetUserInfoPayload, IsPublic, JwtPayload, SetProfilePicturePayload, USER_PATTERNS, UserInfoResponse } from "@web-marketplace/shared";
+import { CreateUserPayload, EditUserInfoPayload, GetMePayload, GetUserInfoPayload, SetProfilePicturePayload, USER_PATTERNS, UserInfoResponse } from "@web-marketplace/shared";
 
 @Controller()
 export class UserController {
@@ -9,7 +9,6 @@ export class UserController {
     private readonly userService: UserService,
   ) {}
 
-  @IsPublic()
   @EventPattern(USER_PATTERNS.USER.CREATE)
   async create(
     @Payload() payload: CreateUserPayload,
@@ -17,36 +16,31 @@ export class UserController {
     return await this.userService.create(payload);
   }
 
-  @IsPublic()
   @MessagePattern(USER_PATTERNS.USER.GET_INFO)
   async getInfo(
     @Payload() payload: GetUserInfoPayload,
-    @JwtPayload() jwtPayload?: AuthTokenPayload,
   ): Promise<UserInfoResponse> {
-    return await this.userService.getInfo(payload, jwtPayload);
+    return await this.userService.getInfo(payload);
   }
 
   @MessagePattern(USER_PATTERNS.USER.GET_ME)
   async getMe(
     @Payload() payload: GetMePayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<UserInfoResponse> {
-    return await this.userService.getInfo({ accessToken: payload.accessToken, userId: jwtPayload.userId }, jwtPayload);
+    return await this.userService.getInfo({ userInfo: payload.userInfo, userId: payload.userInfo.userId });
   }
 
   @MessagePattern(USER_PATTERNS.USER.EDIT_INFO)
   async editInfo(
     @Payload() payload: EditUserInfoPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<UserInfoResponse> {
-    return await this.userService.editInfo(payload, jwtPayload);
+    return await this.userService.editInfo(payload);
   }
 
   @MessagePattern(USER_PATTERNS.USER.SET_PROFILE_PICTURE)
   async setPfp(
     @Payload() payload: SetProfilePicturePayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<UserInfoResponse> {
-    return await this.userService.setProfilePicture(payload, jwtPayload);
+    return await this.userService.setProfilePicture(payload);
   }
 }

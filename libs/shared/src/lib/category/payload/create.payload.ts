@@ -1,7 +1,7 @@
-import { WithTokenPayload } from "../../with-token.payload";
+import { PayloadWithUserInfo } from "../../base.payload";
 import { IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
 
-export class CreateCategoryPayload extends WithTokenPayload {
+export class CreateCategoryPayload extends PayloadWithUserInfo {
   @IsString()
   @MaxLength(128)
   name!: string;

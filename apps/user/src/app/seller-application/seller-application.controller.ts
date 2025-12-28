@@ -1,7 +1,7 @@
 import { SellerApplicationService } from "./seller-application.service";
 import { Controller } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
-import { ApproveSellerApplicationPayload, AuthTokenPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, JwtPayload, RpcAllowedRoles, SellerApplicationInfoResponse, USER_PATTERNS, UserRole } from "@web-marketplace/shared";
+import { ApproveSellerApplicationPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, SellerApplicationInfoResponse, USER_PATTERNS } from "@web-marketplace/shared";
 
 @Controller()
 export class SellerApplicationController {
@@ -9,16 +9,13 @@ export class SellerApplicationController {
     private readonly sellerApplicationService: SellerApplicationService,
   ) {}
 
-  @RpcAllowedRoles(UserRole.USER, UserRole.SELLER)
   @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.CREATE)
   async create(
     @Payload() payload: CreateSellerApplicationPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<SellerApplicationInfoResponse> {
-    return await this.sellerApplicationService.create(payload, jwtPayload);
+    return await this.sellerApplicationService.create(payload);
   }
 
-  @RpcAllowedRoles(UserRole.ADMIN)
   @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.APPROVE)
   async approve(
     @Payload() payload: ApproveSellerApplicationPayload,
@@ -26,7 +23,6 @@ export class SellerApplicationController {
     return await this.sellerApplicationService.approve(payload);
   }
 
-  @RpcAllowedRoles(UserRole.ADMIN)
   @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.DECLINE)
   async decline(
     @Payload() payload: DeclineSellerApplicationPayload,
@@ -34,28 +30,24 @@ export class SellerApplicationController {
     return await this.sellerApplicationService.decline(payload);
   }
 
-  @RpcAllowedRoles(UserRole.USER)
   @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.CANCEL)
   async cancel(
     @Payload() payload: CancelSellerApplicationPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<SellerApplicationInfoResponse> {
-    return await this.sellerApplicationService.cancel(payload, jwtPayload);
+    return await this.sellerApplicationService.cancel(payload);
   }
 
   @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.FIND_ONE)
   async findOne(
     @Payload() payload: FindOneSellerApplicationPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<SellerApplicationInfoResponse> {
-    return await this.sellerApplicationService.findOne(payload, jwtPayload);
+    return await this.sellerApplicationService.findOne(payload);
   }
 
   @MessagePattern(USER_PATTERNS.SELLER_APPLICATION.FIND_MANY)
   async findMany(
     @Payload() payload: FindManySellerApplicationsPayload,
-    @JwtPayload() jwtPayload: AuthTokenPayload,
   ): Promise<FindManyApiResponse<SellerApplicationInfoResponse>> {
-    return await this.sellerApplicationService.findMany(payload, jwtPayload);
+    return await this.sellerApplicationService.findMany(payload);
   }
 }

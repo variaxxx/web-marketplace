@@ -5,19 +5,7 @@ import { MicroserviceOptions, Transport } from "@nestjs/microservices";
 import { MicroserviceErrorFilter, MicroserviceRMQQueue } from "@web-marketplace/shared";
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-    {
-      transport: Transport.RMQ,
-      options: {
-        urls: [process.env.RMQ_URL],
-        queue: MicroserviceRMQQueue.PRODUCT_SERVICE,
-        queueOptions: {
-          durable: true,
-        },
-      },
-    },
-  );
+  const app = await NestFactory.create(AppModule);
 
   app.useGlobalFilters(
     new MicroserviceErrorFilter(),
@@ -31,7 +19,19 @@ async function bootstrap(): Promise<void> {
     },
   ));
 
-  await app.listen();
+  await app.listen(process.env.PORT);
+
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.RMQ,
+    options: {
+      urls: [process.env.RMQ_URL],
+      queue: MicroserviceRMQQueue.PRODUCT_SERVICE,
+      queueOptions: { durable: true },
+    },
+  });
+
+  await app.startAllMicroservices();
+
   Logger.log(
     `🚀 Product service is running...`,
   );

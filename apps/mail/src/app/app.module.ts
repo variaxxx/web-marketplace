@@ -2,9 +2,6 @@ import { AuthFeaturesModule } from "./auth-features/auth-features.module";
 import { MailerModule } from "@nestjs-modules/mailer";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { APP_GUARD } from "@nestjs/core";
-import { JwtModule } from "@nestjs/jwt";
-import { RpcAuthGuard } from "@web-marketplace/shared";
 import Joi from "joi";
 
 export enum EnvKey {
@@ -14,7 +11,6 @@ export enum EnvKey {
   MAIL_PASSWORD = "MAIL_PASSWORD",
   MAIL_SENDER = "MAIL_SENDER",
   CONFIRMATION_PAGE_URL = "CONFIRMATION_PAGE_URL",
-  ACCESS_JWT_SECRET = "ACCESS_JWT_SECRET",
   RMQ_URL = "RMQ_URL",
 }
 
@@ -25,7 +21,6 @@ export const validationSchema = Joi.object({
   [EnvKey.MAIL_PASSWORD]: Joi.string().required(),
   [EnvKey.MAIL_SENDER]: Joi.string().required(),
   [EnvKey.CONFIRMATION_PAGE_URL]: Joi.string().required(),
-  [EnvKey.ACCESS_JWT_SECRET]: Joi.string().required(),
   [EnvKey.RMQ_URL]: Joi.string().required(),
 });
 
@@ -50,14 +45,7 @@ export const validationSchema = Joi.object({
         },
       }),
     }),
-    JwtModule.register({ global: true }),
     AuthFeaturesModule,
-  ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: RpcAuthGuard,
-    },
   ],
 })
 export class AppModule {}

@@ -3,7 +3,7 @@ import { PrismaService } from "../../db/prisma.service";
 import { Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { RpcException } from "@nestjs/microservices";
-import { AuthTokenPayload, FindOneStorePayload, SetStorePicturePayload, StoreInfoResponse, UserRole } from "@web-marketplace/shared";
+import { FindOneStorePayload, SetStorePicturePayload, StoreInfoResponse, USER_ROLE } from "@web-marketplace/shared";
 import { Buffer } from "node:buffer";
 import { randomUUID } from "node:crypto";
 
@@ -46,9 +46,8 @@ export class StoreService {
 
   async setStorePicture(
     payload: SetStorePicturePayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<StoreInfoResponse> {
-    if (jwtPayload.role !== UserRole.SELLER) {
+    if (payload.userInfo.role !== USER_ROLE.SELLER) {
       throw new RpcException({
         status: 403,
         message: "Forbidden",
@@ -56,7 +55,7 @@ export class StoreService {
     }
 
     const oldStore = await this.prisma.store.findUnique({
-      where: { ownerId: jwtPayload.userId },
+      where: { ownerId: payload.userInfo.userId },
       select: { avatarId: true },
     });
 
@@ -75,7 +74,7 @@ export class StoreService {
     );
 
     const store = await this.prisma.store.update({
-      where: { ownerId: jwtPayload.userId },
+      where: { ownerId: payload.userInfo.userId },
       data: { avatarId: filename },
     });
 

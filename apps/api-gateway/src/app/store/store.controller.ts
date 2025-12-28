@@ -1,9 +1,11 @@
-import { AccessToken } from "../../common/decorators/access-token.decorator";
+import { AllowedRoles } from "../../common/decorators/allowed-roles.decorator";
+import { IsPublic } from "../../common/decorators/is-public.decorator";
+import { UserInfo } from "../../common/decorators/user-info.decorator";
 import { BaseRpcController } from "../base-rpc.controller";
 import { BadRequestException, Controller, Get, HttpCode, HttpStatus, Inject, Param, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { FindMyStorePayload, FindOneStorePayload, MicroserviceName, SetStorePicturePayload, StoreInfoResponse, USER_PATTERNS } from "@web-marketplace/shared";
+import { AuthTokenPayload, FindMyStorePayload, FindOneStorePayload, MicroserviceName, SetStorePicturePayload, StoreInfoResponse, USER_PATTERNS, USER_ROLE } from "@web-marketplace/shared";
 import { extname } from "node:path";
 
 @Controller("store")
@@ -14,24 +16,25 @@ export class StoreController extends BaseRpcController {
     super();
   }
 
+  @AllowedRoles(USER_ROLE.SELLER)
   @HttpCode(HttpStatus.OK)
   @Get("my")
   async getMyStore(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
   ): Promise<StoreInfoResponse> {
     return await this.send<FindMyStorePayload, StoreInfoResponse>(
       this.userClient,
       USER_PATTERNS.STORE.GET_MY,
       {
-        accessToken,
+        userInfo,
       },
     );
   }
 
+  @IsPublic()
   @HttpCode(HttpStatus.OK)
   @Get(":id")
   async getInfo(
-    @AccessToken() accessToken: string,
     @Param("id") id: string,
   ): Promise<StoreInfoResponse> {
     return await this.send<FindOneStorePayload, StoreInfoResponse>(
@@ -43,6 +46,7 @@ export class StoreController extends BaseRpcController {
     );
   }
 
+  @AllowedRoles(USER_ROLE.SELLER)
   @HttpCode(HttpStatus.OK)
   @Post("picture")
   @UseInterceptors(FileInterceptor("image", {
@@ -58,14 +62,14 @@ export class StoreController extends BaseRpcController {
     },
   }))
   async setPfp(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @UploadedFile() image: Express.Multer.File,
   ): Promise<StoreInfoResponse> {
     return await this.send<SetStorePicturePayload, StoreInfoResponse>(
       this.userClient,
       USER_PATTERNS.STORE.SET_STORE_PICTURE,
       {
-        accessToken,
+        userInfo,
         image: {
           buffer: image.buffer,
           mimetype: image.mimetype,

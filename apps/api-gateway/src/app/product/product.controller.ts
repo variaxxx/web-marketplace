@@ -1,10 +1,12 @@
-import { AccessToken } from "../../common/decorators/access-token.decorator";
+import { AllowedRoles } from "../../common/decorators/allowed-roles.decorator";
+import { IsPublic } from "../../common/decorators/is-public.decorator";
+import { UserInfo } from "../../common/decorators/user-info.decorator";
 import { pictureFileFilter } from "../../common/filters/picture-file.filter";
 import { BaseRpcController } from "../base-rpc.controller";
 import { BadRequestException, Body, Controller, Delete, Get, HttpCode, HttpStatus, Inject, Param, Patch, Post, Query, UploadedFiles, UseInterceptors } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { FilesInterceptor } from "@nestjs/platform-express";
-import { CreateProductDto, CreateProductPayload, DeleteProductPayload, EditProductDto, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, HideProductPayload, MicroserviceName, PRODUCT_PATTERNS, ProductInfoResponse, ProductSearchPayload, PutProductForSalePayload } from "@web-marketplace/shared";
+import { AuthTokenPayload, CreateProductDto, CreateProductPayload, DeleteProductPayload, EditProductDto, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, HideProductPayload, MicroserviceName, PRODUCT_PATTERNS, ProductInfoResponse, ProductSearchPayload, PutProductForSalePayload, USER_ROLE } from "@web-marketplace/shared";
 
 @Controller("product")
 export class ProductController extends BaseRpcController {
@@ -14,6 +16,7 @@ export class ProductController extends BaseRpcController {
     super();
   }
 
+  @IsPublic()
   @Get("search")
   async search(
     @Query("query") query: string,
@@ -33,6 +36,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
+  @AllowedRoles(USER_ROLE.SELLER)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FilesInterceptor("image", 5, {
@@ -43,7 +47,7 @@ export class ProductController extends BaseRpcController {
   }))
   async create(
     @Body() dto: CreateProductDto,
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @UploadedFiles() images: Express.Multer.File[],
   ): Promise<ProductInfoResponse> {
     if (!images.length) {
@@ -59,7 +63,7 @@ export class ProductController extends BaseRpcController {
       PRODUCT_PATTERNS.PRODUCT.CREATE,
       {
         ...dto,
-        accessToken,
+        userInfo,
         images: images.map(image => ({
           buffer: image.buffer,
           mimetype: image.mimetype,
@@ -70,6 +74,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
+  @IsPublic()
   @Get("findMany")
   @HttpCode(HttpStatus.OK)
   async findMany(
@@ -85,21 +90,23 @@ export class ProductController extends BaseRpcController {
     );
   }
 
+  @AllowedRoles(USER_ROLE.SELLER)
   @Get("my")
   @HttpCode(HttpStatus.OK)
   async findMy(
     @Query("order") order: "asc" | "desc" = "asc",
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Query("limit") limit?: number,
     @Query("offset") offset?: number,
   ): Promise<FindManyApiResponse<ProductInfoResponse>> {
     return await this.send<FindMyProductsPayload, FindManyApiResponse<ProductInfoResponse>>(
       this.productClient,
       PRODUCT_PATTERNS.PRODUCT.FIND_MY,
-      { accessToken, order, limit, offset },
+      { userInfo, order, limit, offset },
     );
   }
 
+  @IsPublic()
   @Get(":productId")
   @HttpCode(HttpStatus.OK)
   async findOne(
@@ -112,6 +119,7 @@ export class ProductController extends BaseRpcController {
     );
   }
 
+  @AllowedRoles(USER_ROLE.SELLER)
   @Patch(":productId")
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FilesInterceptor("newImages", 5, {
@@ -121,7 +129,7 @@ export class ProductController extends BaseRpcController {
     fileFilter: pictureFileFilter,
   }))
   async edit(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Param("productId") productId: string,
     @Body() dto: EditProductDto,
     @UploadedFiles() newImages: Express.Multer.File[],
@@ -132,7 +140,7 @@ export class ProductController extends BaseRpcController {
       {
         ...dto,
         id: productId,
-        accessToken,
+        userInfo,
         newImages: newImages.map(i => ({
           buffer: i.buffer,
           mimetype: i.mimetype,
@@ -144,10 +152,11 @@ export class ProductController extends BaseRpcController {
     );
   }
 
+  @AllowedRoles(USER_ROLE.SELLER)
   @Delete(":productId")
   @HttpCode(HttpStatus.OK)
   async delete(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Param("productId") productId: string,
   ): Promise<ProductInfoResponse> {
     return await this.send<DeleteProductPayload, ProductInfoResponse>(
@@ -155,15 +164,16 @@ export class ProductController extends BaseRpcController {
       PRODUCT_PATTERNS.PRODUCT.DELETE,
       {
         id: productId,
-        accessToken,
+        userInfo,
       },
     );
   }
 
+  @AllowedRoles(USER_ROLE.SELLER)
   @Post(":productId/hide")
   @HttpCode(HttpStatus.OK)
   async hide(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Param("productId") productId: string,
   ): Promise<ProductInfoResponse> {
     return await this.send<HideProductPayload, ProductInfoResponse>(
@@ -171,15 +181,16 @@ export class ProductController extends BaseRpcController {
       PRODUCT_PATTERNS.PRODUCT.HIDE,
       {
         id: productId,
-        accessToken,
+        userInfo,
       },
     );
   }
 
+  @AllowedRoles(USER_ROLE.SELLER)
   @Post(":productId/putForSale")
   @HttpCode(HttpStatus.OK)
   async putForSale(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Param("productId") productId: string,
   ): Promise<ProductInfoResponse> {
     return await this.send<PutProductForSalePayload, ProductInfoResponse>(
@@ -187,7 +198,7 @@ export class ProductController extends BaseRpcController {
       PRODUCT_PATTERNS.PRODUCT.PUT_FOR_SALE,
       {
         productId,
-        accessToken,
+        userInfo,
       },
     );
   }

@@ -1,15 +1,11 @@
-import { RpcAuthGuard } from "../../../../libs/shared/src";
 import { CategoryModule } from "./category/category.module";
 import { ProductModule } from "./product/product.module";
 import { SearchModule } from "./search/search.module";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { APP_GUARD } from "@nestjs/core";
-import { JwtModule } from "@nestjs/jwt";
 import Joi from "joi";
 
 export enum EnvKey {
-  ACCESS_JWT_SECRET = "ACCESS_JWT_SECRET",
   RMQ_URL = "RMQ_URL",
   ES_NODE = "ES_NODE",
   ES_USERNAME = "ES_USERNAME",
@@ -21,7 +17,6 @@ export enum EnvKey {
 }
 
 export const validationSchema = Joi.object({
-  [EnvKey.ACCESS_JWT_SECRET]: Joi.string().required(),
   [EnvKey.RMQ_URL]: Joi.string().required(),
   [EnvKey.ES_NODE]: Joi.string().required(),
   [EnvKey.ES_USERNAME]: Joi.string().required(),
@@ -35,17 +30,9 @@ export const validationSchema = Joi.object({
 @Module({
   imports: [
     ConfigModule.forRoot({ validationSchema, isGlobal: true }),
-    JwtModule.register({ global: true }),
     ProductModule,
     SearchModule,
     CategoryModule,
-  ],
-  controllers: [],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: RpcAuthGuard,
-    },
   ],
 })
 export class AppModule {}

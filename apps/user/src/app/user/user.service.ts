@@ -2,7 +2,7 @@ import { MinioService } from "../../db/minio.service";
 import { PrismaService } from "../../db/prisma.service";
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { RpcException } from "@nestjs/microservices";
-import { AuthTokenPayload, CreateUserPayload, EditUserInfoPayload, GetUserInfoPayload, SetProfilePicturePayload, UserInfoResponse, UserRole } from "@web-marketplace/shared";
+import { CreateUserPayload, EditUserInfoPayload, GetUserInfoPayload, SetProfilePicturePayload, USER_ROLE, UserInfoResponse } from "@web-marketplace/shared";
 import { Buffer } from "node:buffer";
 import { randomUUID } from "node:crypto";
 
@@ -37,11 +37,10 @@ export class UserService implements OnModuleInit {
 
   async editInfo(
     payload: EditUserInfoPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<UserInfoResponse> {
     try {
       const user = await this.prisma.user.update({
-        where: { id: jwtPayload.userId },
+        where: { id: payload.userInfo.userId },
         data: {
           name: payload.name,
           phone: payload.phone,
@@ -70,7 +69,6 @@ export class UserService implements OnModuleInit {
 
   async getInfo(
     payload: GetUserInfoPayload,
-    jwtPayload?: AuthTokenPayload,
   ): Promise<UserInfoResponse> {
     const user = await this.prisma.user.findUnique({
       where: { id: payload.userId },
@@ -99,7 +97,7 @@ export class UserService implements OnModuleInit {
     return {
       name: user.name,
       avatarUrl: this.getAvatarUrl(user.avatarId),
-      phone: !jwtPayload || (jwtPayload.role !== UserRole.ADMIN && payload.userId !== jwtPayload.userId)
+      phone: !payload.userInfo || (payload.userInfo.role !== USER_ROLE.ADMIN && payload.userId !== payload.userInfo.userId)
         ? undefined
         : user.phone,
     };
@@ -107,10 +105,9 @@ export class UserService implements OnModuleInit {
 
   async setProfilePicture(
     payload: SetProfilePicturePayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<UserInfoResponse> {
     const oldUser = await this.prisma.user.findUnique({
-      where: { id: jwtPayload.userId },
+      where: { id: payload.userInfo.userId },
       select: { avatarId: true },
     });
 
@@ -129,7 +126,7 @@ export class UserService implements OnModuleInit {
     );
 
     const user = await this.prisma.user.update({
-      where: { id: jwtPayload.userId },
+      where: { id: payload.userInfo.userId },
       data: { avatarId: filename },
     });
 

@@ -1,7 +1,7 @@
 import { CategoryService } from "./category.service";
 import { Controller } from "@nestjs/common";
 import { MessagePattern, Payload } from "@nestjs/microservices";
-import { CategoryInfoResponse, CreateCategoryPayload, DeleteCategoryPayload, EditCategoryPayload, FindOneCategoryPayload, IsPublic, PRODUCT_PATTERNS, RpcAllowedRoles, UserRole } from "@web-marketplace/shared";
+import { CategoryInfoResponse, CreateCategoryPayload, DeleteCategoryPayload, EditCategoryPayload, FindOneCategoryPayload, PRODUCT_PATTERNS } from "@web-marketplace/shared";
 
 @Controller()
 export class CategoryController {
@@ -9,7 +9,6 @@ export class CategoryController {
     private readonly categoryService: CategoryService,
   ) {}
 
-  @RpcAllowedRoles(UserRole.ADMIN)
   @MessagePattern(PRODUCT_PATTERNS.CATEGORY.CREATE)
   async create(
     @Payload() payload: CreateCategoryPayload,
@@ -17,7 +16,6 @@ export class CategoryController {
     return await this.categoryService.create(payload);
   }
 
-  @RpcAllowedRoles(UserRole.ADMIN)
   @MessagePattern(PRODUCT_PATTERNS.CATEGORY.EDIT)
   async edit(
     @Payload() payload: EditCategoryPayload,
@@ -25,7 +23,6 @@ export class CategoryController {
     return await this.categoryService.edit(payload);
   }
 
-  @RpcAllowedRoles(UserRole.ADMIN)
   @MessagePattern(PRODUCT_PATTERNS.CATEGORY.DELETE)
   async delete(
     @Payload() payload: DeleteCategoryPayload,
@@ -33,13 +30,11 @@ export class CategoryController {
     return await this.categoryService.delete(payload);
   }
 
-  @IsPublic()
   @MessagePattern(PRODUCT_PATTERNS.CATEGORY.FIND_ALL)
   async findAll(): Promise<CategoryInfoResponse[]> {
     return await this.categoryService.findAll();
   }
 
-  @IsPublic()
   @MessagePattern(PRODUCT_PATTERNS.CATEGORY.FIND_ONE)
   async findOne(
     @Payload() payload: FindOneCategoryPayload,

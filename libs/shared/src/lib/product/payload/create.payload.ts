@@ -1,9 +1,9 @@
+import { PayloadWithUserInfo } from "../../base.payload";
 import { ImagePayload } from "../../image.payload";
-import { WithTokenPayload } from "../../with-token.payload";
 import { Type } from "class-transformer";
 import { ArrayMaxSize, IsArray, IsInt, IsPositive, IsString, MaxLength, MinLength, ValidateNested } from "class-validator";
 
-export class CreateProductPayload extends WithTokenPayload {
+export class CreateProductPayload extends PayloadWithUserInfo {
   @IsString()
   @MinLength(3)
   @MaxLength(128)

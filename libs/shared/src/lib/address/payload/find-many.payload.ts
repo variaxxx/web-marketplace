@@ -1,7 +1,7 @@
-import { WithTokenPayload } from "../../with-token.payload";
+import { PayloadWithUserInfo } from "../../base.payload";
 import { IsInt, IsOptional, IsPositive, IsUUID } from "class-validator";
 
-export class FindManyAddressesPayload extends WithTokenPayload {
+export class FindManyAddressesPayload extends PayloadWithUserInfo {
   @IsInt()
   @IsPositive()
   @IsOptional()

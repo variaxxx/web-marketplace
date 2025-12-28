@@ -4,7 +4,7 @@ import { SearchService } from "../search/search.service";
 import { Inject, Injectable, OnModuleInit } from "@nestjs/common";
 import { ClientProxy, RpcException } from "@nestjs/microservices";
 import { Prisma } from "@prisma/generated/productClient";
-import { AuthTokenPayload, CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, FindProductsByIdsPayload, HideProductPayload, MarkAsSoldProductPayload, MicroserviceName, normalizeText, PRODUCT_STATUS, ProductInfoResponse, ProductStatus, ProductStatusChangedPayload, PutProductForSalePayload, USER_PATTERNS } from "@web-marketplace/shared";
+import { CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, FindProductsByIdsPayload, HideProductPayload, MarkAsSoldProductPayload, MicroserviceName, normalizeText, PRODUCT_STATUS, ProductInfoResponse, ProductStatus, ProductStatusChangedPayload, PutProductForSalePayload, USER_PATTERNS } from "@web-marketplace/shared";
 import { Buffer } from "node:buffer";
 import { randomUUID } from "node:crypto";
 import { firstValueFrom } from "rxjs";
@@ -83,7 +83,6 @@ export class ProductService implements OnModuleInit {
 
   async create(
     payload: CreateProductPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
     const files: {
       url: string;
@@ -114,7 +113,7 @@ export class ProductService implements OnModuleInit {
 
     const product = await this.prisma.product.create({
       data: {
-        sellerId: jwtPayload.userId,
+        sellerId: payload.userInfo.userId,
         status: PRODUCT_STATUS.ON_SALE,
         name: normalizeText(payload.name, "name"),
         description: normalizeText(payload.description, "description"),
@@ -185,7 +184,6 @@ export class ProductService implements OnModuleInit {
 
   async edit(
     payload: EditProductPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
     if (payload.existingImages.length + payload.newImages.length > 5) {
       throw new RpcException({
@@ -239,7 +237,7 @@ export class ProductService implements OnModuleInit {
 
     const product = await this.prisma.product.update({
       where: {
-        sellerId: jwtPayload.userId,
+        sellerId: payload.userInfo.userId,
         id: payload.id,
       },
       data: {
@@ -273,11 +271,10 @@ export class ProductService implements OnModuleInit {
 
   async delete(
     payload: DeleteProductPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
     const product = await this.prisma.product.update({
       where: {
-        sellerId: jwtPayload.userId,
+        sellerId: payload.userInfo.userId,
         id: payload.id,
       },
       data: {
@@ -307,12 +304,11 @@ export class ProductService implements OnModuleInit {
 
   async hide(
     payload: HideProductPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
     const product = await this.prisma.product.update({
       where: {
         id: payload.id,
-        sellerId: jwtPayload.userId,
+        sellerId: payload.userInfo.userId,
       },
       data: { status: PRODUCT_STATUS.HIDDEN },
       select: productSelect,
@@ -326,10 +322,9 @@ export class ProductService implements OnModuleInit {
 
   async findMy(
     payload: FindMyProductsPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<FindManyApiResponse<ProductInfoResponse>> {
     const where = {
-      sellerId: jwtPayload.userId,
+      sellerId: payload.userInfo.userId,
       status: { in: [PRODUCT_STATUS.ON_SALE, PRODUCT_STATUS.SOLD, PRODUCT_STATUS.HIDDEN] },
     };
 
@@ -372,12 +367,11 @@ export class ProductService implements OnModuleInit {
 
   async putForSale(
     payload: PutProductForSalePayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<ProductInfoResponse> {
     const product = await this.prisma.product.update({
       where: {
         id: payload.productId,
-        sellerId: jwtPayload.userId,
+        sellerId: payload.userInfo.userId,
       },
       data: { status: PRODUCT_STATUS.ON_SALE },
       select: productSelect,

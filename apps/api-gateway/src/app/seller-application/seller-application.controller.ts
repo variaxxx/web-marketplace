@@ -1,8 +1,9 @@
-import { AccessToken } from "../../common/decorators/access-token.decorator";
+import { AllowedRoles } from "../../common/decorators/allowed-roles.decorator";
+import { UserInfo } from "../../common/decorators/user-info.decorator";
 import { BaseRpcController } from "../base-rpc.controller";
 import { Body, Controller, Get, HttpCode, HttpStatus, Inject, Param, Post } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
-import { ApproveSellerApplicationPayload, CancelSellerApplicationPayload, CreateSellerApplicationDto, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsDto, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, MicroserviceName, SellerApplicationInfoResponse, USER_PATTERNS } from "@web-marketplace/shared";
+import { ApproveSellerApplicationPayload, AuthTokenPayload, CancelSellerApplicationPayload, CreateSellerApplicationDto, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsDto, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, MicroserviceName, SellerApplicationInfoResponse, USER_PATTERNS, USER_ROLE } from "@web-marketplace/shared";
 
 @Controller("sellerApplication")
 export class SellerApplicationController extends BaseRpcController {
@@ -12,65 +13,65 @@ export class SellerApplicationController extends BaseRpcController {
     super();
   }
 
+  @AllowedRoles(USER_ROLE.USER)
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Body() dto: CreateSellerApplicationDto,
   ): Promise<SellerApplicationInfoResponse> {
     return await this.send<CreateSellerApplicationPayload, SellerApplicationInfoResponse>(
       this.userClient,
       USER_PATTERNS.SELLER_APPLICATION.CREATE,
       {
-        accessToken,
+        userInfo,
         ...dto,
       },
     );
   }
 
+  @AllowedRoles(USER_ROLE.USER)
   @Post(":id/cancel")
   @HttpCode(HttpStatus.OK)
   async cancel(
-    @AccessToken() accessToken: string,
     @Param("id") id: string,
+    @UserInfo() userInfo: AuthTokenPayload,
   ): Promise<SellerApplicationInfoResponse> {
     return await this.send<CancelSellerApplicationPayload, SellerApplicationInfoResponse>(
       this.userClient,
       USER_PATTERNS.SELLER_APPLICATION.CANCEL,
       {
-        accessToken,
+        userInfo,
         applicationId: id,
       },
     );
   }
 
+  @AllowedRoles(USER_ROLE.ADMIN)
   @Post(":id/decline")
   @HttpCode(HttpStatus.OK)
   async decline(
-    @AccessToken() accessToken: string,
     @Param("id") id: string,
   ): Promise<SellerApplicationInfoResponse> {
     return await this.send<DeclineSellerApplicationPayload, SellerApplicationInfoResponse>(
       this.userClient,
       USER_PATTERNS.SELLER_APPLICATION.DECLINE,
       {
-        accessToken,
         applicationId: id,
       },
     );
   }
 
+  @AllowedRoles(USER_ROLE.ADMIN)
   @Post(":id/approve")
   @HttpCode(HttpStatus.OK)
   async approve(
-    @AccessToken() accessToken: string,
     @Param("id") id: string,
   ): Promise<SellerApplicationInfoResponse> {
     return await this.send<ApproveSellerApplicationPayload, SellerApplicationInfoResponse>(
       this.userClient,
       USER_PATTERNS.SELLER_APPLICATION.APPROVE,
       {
-        accessToken,
         applicationId: id,
       },
     );
@@ -79,14 +80,14 @@ export class SellerApplicationController extends BaseRpcController {
   @Get("findMany")
   @HttpCode(HttpStatus.OK)
   async findMany(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Body() dto: FindManySellerApplicationsDto,
   ): Promise<FindManyApiResponse<SellerApplicationInfoResponse>> {
     return await this.send<FindManySellerApplicationsPayload, FindManyApiResponse<SellerApplicationInfoResponse>>(
       this.userClient,
       USER_PATTERNS.SELLER_APPLICATION.FIND_MANY,
       {
-        accessToken,
+        userInfo,
         ...dto,
       },
     );
@@ -95,14 +96,14 @@ export class SellerApplicationController extends BaseRpcController {
   @Get(":id")
   @HttpCode(HttpStatus.OK)
   async findOne(
-    @AccessToken() accessToken: string,
+    @UserInfo() userInfo: AuthTokenPayload,
     @Param("id") id: string,
   ): Promise<SellerApplicationInfoResponse> {
     return await this.send<FindOneSellerApplicationPayload, SellerApplicationInfoResponse>(
       this.userClient,
       USER_PATTERNS.SELLER_APPLICATION.FIND_ONE,
       {
-        accessToken,
+        userInfo,
         applicationId: id,
       },
     );

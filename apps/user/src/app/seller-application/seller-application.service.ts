@@ -1,7 +1,7 @@
 import { PrismaService } from "../../db/prisma.service";
 import { Inject, Injectable } from "@nestjs/common";
 import { ClientProxy, RpcException } from "@nestjs/microservices";
-import { ApproveSellerApplicationPayload, AUTH_PATTERNS, AuthTokenPayload, BecomeSellerPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, MicroserviceName, SellerApplicationInfoResponse, SellerApplicationStatus, UserRole } from "@web-marketplace/shared";
+import { ApproveSellerApplicationPayload, AUTH_PATTERNS, BecomeSellerPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, DeclineSellerApplicationPayload, FindManyApiResponse, FindManySellerApplicationsPayload, FindOneSellerApplicationPayload, MicroserviceName, SellerApplicationInfoResponse, SellerApplicationStatus, USER_ROLE } from "@web-marketplace/shared";
 
 @Injectable()
 export class SellerApplicationService {
@@ -12,9 +12,8 @@ export class SellerApplicationService {
 
   async create(
     payload: CreateSellerApplicationPayload,
-    tokenPayload: AuthTokenPayload,
   ): Promise<SellerApplicationInfoResponse> {
-    if (tokenPayload.role === UserRole.SELLER) {
+    if (payload.userInfo.role === USER_ROLE.SELLER) {
       throw new RpcException({
         status: 400,
         message: "You are already a seller",
@@ -22,7 +21,7 @@ export class SellerApplicationService {
     }
 
     const candidate = await this.prisma.sellerApplication.findMany({
-      where: { userId: tokenPayload.userId, status: "PENDING" },
+      where: { userId: payload.userInfo.userId, status: "PENDING" },
     });
 
     if (candidate.length) {
@@ -34,7 +33,7 @@ export class SellerApplicationService {
 
     const application = await this.prisma.sellerApplication.create({
       data: {
-        userId: tokenPayload.userId,
+        userId: payload.userInfo.userId,
         status: "PENDING",
         storeName: payload.storeName,
         storeDescription: payload.storeDescription,
@@ -92,12 +91,11 @@ export class SellerApplicationService {
 
   async cancel(
     payload: CancelSellerApplicationPayload,
-    tokenPayload: AuthTokenPayload,
   ): Promise<SellerApplicationInfoResponse> {
     const application = await this.prisma.sellerApplication.update({
       where: {
         id: payload.applicationId,
-        userId: tokenPayload.userId,
+        userId: payload.userInfo.userId,
         status: "PENDING",
       },
       data: { status: "CANCELLED" },
@@ -143,15 +141,14 @@ export class SellerApplicationService {
 
   async findOne(
     payload: FindOneSellerApplicationPayload,
-    tokenPayload: AuthTokenPayload,
   ): Promise<SellerApplicationInfoResponse> {
     const application = await this.prisma.sellerApplication.findUnique({
       where: { id: payload.applicationId },
     });
 
     if (
-      [UserRole.SELLER, UserRole.USER].includes(tokenPayload.role as UserRole)
-      && ((application && application.userId !== tokenPayload.userId) || !application)
+      ([USER_ROLE.SELLER, USER_ROLE.USER] as string[]).includes(payload.userInfo.role)
+      && ((application && application.userId !== payload.userInfo.userId) || !application)
     ) {
       throw new RpcException({
         status: 403,
@@ -171,14 +168,13 @@ export class SellerApplicationService {
 
   async findMany(
     payload: FindManySellerApplicationsPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<FindManyApiResponse<SellerApplicationInfoResponse>> {
     const where: any = {};
 
     if (payload.status)
       where.status = payload.status;
-    if ([UserRole.SELLER, UserRole.USER].includes(jwtPayload.role as UserRole))
-      where.userId = jwtPayload.userId;
+    if (([USER_ROLE.SELLER, USER_ROLE.USER] as string[]).includes(payload.userInfo.role))
+      where.userId = payload.userInfo.userId;
 
     const [totalCount, applications] = await this.prisma.$transaction([
       this.prisma.sellerApplication.count({

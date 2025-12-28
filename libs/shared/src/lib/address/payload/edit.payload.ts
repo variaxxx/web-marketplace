@@ -1,7 +1,7 @@
-import { WithTokenPayload } from "../../with-token.payload";
+import { PayloadWithUserInfo } from "../../base.payload";
 import { IsLatitude, IsLongitude, IsOptional, IsString, IsUUID, MaxLength } from "class-validator";
 
-export class EditAddressPayload extends WithTokenPayload {
+export class EditAddressPayload extends PayloadWithUserInfo {
   @IsUUID()
   addressId!: string;
 

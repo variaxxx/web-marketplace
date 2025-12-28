@@ -5,13 +5,9 @@ import { UserModule } from "./user/user.module";
 import { WishlistModule } from "./wishlist/wishlist.module";
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
-import { APP_GUARD } from "@nestjs/core";
-import { JwtModule } from "@nestjs/jwt";
-import { RpcAuthGuard } from "@web-marketplace/shared";
 import Joi from "joi";
 
 export enum EnvKey {
-  ACCESS_JWT_SECRET = "ACCESS_JWT_SECRET",
   RMQ_URL = "RMQ_URL",
   MINIO_ENDPOINT = "MINIO_ENDPOINT",
   MINIO_PORT = "MINIO_PORT",
@@ -20,7 +16,6 @@ export enum EnvKey {
 }
 
 export const validationSchema = Joi.object({
-  [EnvKey.ACCESS_JWT_SECRET]: Joi.string().required(),
   [EnvKey.RMQ_URL]: Joi.string().required(),
   [EnvKey.MINIO_ENDPOINT]: Joi.string(),
   [EnvKey.MINIO_PORT]: Joi.number().required(),
@@ -31,18 +26,11 @@ export const validationSchema = Joi.object({
 @Module({
   imports: [
     ConfigModule.forRoot({ validationSchema, isGlobal: true }),
-    JwtModule.register({ global: true }),
     UserModule,
     SellerApplicationModule,
     StoreModule,
     AddressModule,
     WishlistModule,
-  ],
-  providers: [
-    {
-      provide: APP_GUARD,
-      useClass: RpcAuthGuard,
-    },
   ],
 })
 export class AppModule {}

@@ -1,7 +1,7 @@
 import { PrismaService } from "../../db/prisma.service";
 import { Inject, Injectable } from "@nestjs/common";
 import { ClientProxy, RpcException } from "@nestjs/microservices";
-import { AddWishlistItemPayload, AuthTokenPayload, FindManyApiResponse, FindManyWishlistItemsPayload, FindOneProductPayload, MicroserviceName, PrismaQueryError, PRODUCT_PATTERNS, PRODUCT_STATUS, ProductInfoResponse, ProductStatusChangedPayload, RemoveWishlistItemPayload } from "@web-marketplace/shared";
+import { AddWishlistItemPayload, FindManyApiResponse, FindManyWishlistItemsPayload, FindOneProductPayload, MicroserviceName, PrismaQueryError, PRODUCT_PATTERNS, PRODUCT_STATUS, ProductInfoResponse, ProductStatusChangedPayload, RemoveWishlistItemPayload } from "@web-marketplace/shared";
 import { catchError, firstValueFrom, throwError } from "rxjs";
 
 @Injectable()
@@ -13,7 +13,6 @@ export class WishlistService {
 
   async addItem(
     payload: AddWishlistItemPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<void> {
     const product = await firstValueFrom(this.productClient.send<ProductInfoResponse, FindOneProductPayload>(
       PRODUCT_PATTERNS.PRODUCT.FIND_ONE,
@@ -24,7 +23,7 @@ export class WishlistService {
 
     return void await this.prisma.wishlistItem.create({
       data: {
-        userId: jwtPayload.userId,
+        userId: payload.userInfo.userId,
         productId: payload.productId,
         productStatus: product.status,
       },
@@ -37,10 +36,9 @@ export class WishlistService {
 
   async findItems(
     payload: FindManyWishlistItemsPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<FindManyApiResponse<string>> {
     const where = {
-      userId: jwtPayload.userId,
+      userId: payload.userInfo.userId,
       productStatus: { in: [PRODUCT_STATUS.ON_SALE, PRODUCT_STATUS.SOLD] },
     };
     const [items, total] = await this.prisma.$transaction([
@@ -63,13 +61,12 @@ export class WishlistService {
 
   async removeItem(
     payload: RemoveWishlistItemPayload,
-    jwtPayload: AuthTokenPayload,
   ): Promise<void> {
     return void await this.prisma.wishlistItem.delete({
       where: {
         productId_userId: {
           productId: payload.productId,
-          userId: jwtPayload.userId,
+          userId: payload.userInfo.userId,
         },
       },
     }).catch((e) => {
