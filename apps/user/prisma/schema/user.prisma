@@ -1,0 +1,21 @@
+model User {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt() @map("updated_at")
+
+  phone     String?
+  name      String?
+  avatarUrl String? @map("avatar_url")
+
+  store Store?
+
+  wishlist                    WishlistItem[]
+  addresses                   Address[]
+  storeEditRequests           StoreEditRequest[]
+  reviewedSellerApplications  SellerApplication[] @relation("reviewer")
+  submittedSellerApplications SellerApplication[] @relation("user")
+
+  @@index([createdAt])
+  @@map("users")
+}

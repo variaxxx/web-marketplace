@@ -1,5 +1,5 @@
 import { ProductService } from "./product.service";
-import { Controller } from "@nestjs/common";
+import { Controller, Post } from "@nestjs/common";
 import { EventPattern, MessagePattern, Payload } from "@nestjs/microservices";
 import { CreateProductPayload, DeleteProductPayload, EditProductPayload, FindManyApiResponse, FindManyProductsPayload, FindMyProductsPayload, FindOneProductPayload, FindProductsByIdsPayload, HideProductPayload, MarkAsSoldProductPayload, PRODUCT_PATTERNS, ProductInfoResponse, PutProductForSalePayload } from "@web-marketplace/shared";
 
@@ -9,6 +9,7 @@ export class ProductController {
     private readonly productService: ProductService,
   ) {}
 
+  @Post()
   @MessagePattern(PRODUCT_PATTERNS.PRODUCT.CREATE)
   async create(
     @Payload() payload: CreateProductPayload,

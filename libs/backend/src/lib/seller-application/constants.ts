@@ -1,0 +1,8 @@
+export const SELLER_APPLICATION_STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export type SellerApplicationStatus = typeof SELLER_APPLICATION_STATUS[keyof typeof SELLER_APPLICATION_STATUS];

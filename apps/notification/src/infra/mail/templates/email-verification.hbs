@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title></title>
+  <style>
+    .container {
+      margin: 0 auto;
+      width: 100%;
+      max-width: 600px;
+      padding: 0 0px;
+      padding-bottom: 10px;
+      border-radius: 5px;
+      line-height: 1.8;
+      font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    }
+
+    .otp {
+      text-align: center;
+      font-size: xx-large;
+      font-weight: bolder;
+      letter-spacing: 0.2em;
+    }
+
+    .header {
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <a>Prove Your WebMarketplace Identity</a>
+    </div>
+
+    <p>
+      We have received a login request for your WebMarketplace account. For
+      security purposes, please verify your identity by providing the
+      following code.
+      <br />
+      <br />
+      <b>Your verification code is:</b>
+    </p>
+
+
+    <h2 class="otp">{{ code }}</h2>
+
+    <p style="font-size: 0.9em; ">
+      <strong>This code is valid for 3 minutes.</strong>
+      <br />
+      <br />
+      If it wasn`t you, please ignore this message.<br />
+      <strong>Do not forward or give this code to anyone.</strong>
+    </p>
+  </div>
+  <div style="text-align: center">
+    &copy; 2026 WebMarketplace
+  </div>
+</body>
+</html>

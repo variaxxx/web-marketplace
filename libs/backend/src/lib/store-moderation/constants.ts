@@ -1,0 +1,8 @@
+export const STORE_EDIT_REQUEST_STATUS = {
+  PENDING: "PENDING",
+  APPROVED: "APPROVED",
+  REJECTED: "REJECTED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export type StoreEditRequestStatus = typeof STORE_EDIT_REQUEST_STATUS[keyof typeof STORE_EDIT_REQUEST_STATUS];

@@ -1,0 +1,15 @@
+import { ADDRESS_V1_PACKAGE_NAME } from "./gen/address";
+import { AUTH_V1_PACKAGE_NAME } from "./gen/auth";
+import { MEDIA_V1_PACKAGE_NAME } from "./gen/media";
+import { SELLER_APPLICATION_V1_PACKAGE_NAME } from "./gen/seller-application";
+import { STORE_V1_PACKAGE_NAME } from "./gen/store";
+import { USER_V1_PACKAGE_NAME } from "./gen/user";
+
+export const GRPC_PACKAGE_NAMES = {
+  AUTH_SERVICE: AUTH_V1_PACKAGE_NAME,
+  USER_SERVICE: USER_V1_PACKAGE_NAME,
+  MEDIA_SERVICE: MEDIA_V1_PACKAGE_NAME,
+  ADDRESS_SERVICE: ADDRESS_V1_PACKAGE_NAME,
+  SELLER_APPLICATION_SERVICE: SELLER_APPLICATION_V1_PACKAGE_NAME,
+  STORE_SERVICE: STORE_V1_PACKAGE_NAME,
+} as const;

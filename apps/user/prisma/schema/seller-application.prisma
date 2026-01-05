@@ -1,0 +1,31 @@
+model SellerApplication {
+  id String @id @default(uuid())
+
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  decisionMadeAt DateTime? @map("decision_made_at")
+
+  status          SellerApplicationStatus @default(PENDING)
+  rejectionReason String?                 @map("rejection_reason")
+
+  storeName        String @map("store_name")
+  storeDescription String @map("store_description")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, name: "user")
+
+  reviewedById String? @map("reviewed_by_id")
+  reviewedBy   User?   @relation(fields: [reviewedById], references: [id], onDelete: SetNull, name: "reviewer")
+
+  @@index([status, createdAt])
+  @@index([userId, status])
+  @@index([reviewedById])
+  @@map("seller_applications")
+}
+
+enum SellerApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}

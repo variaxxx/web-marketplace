@@ -1,0 +1,19 @@
+model WishlistItem {
+  createdAt DateTime @default(now()) @map("created_at")
+
+  productStatus ProductStatus
+  productId     String        @map("product_id")
+  userId        String        @map("user_id")
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([productId, userId])
+  @@index([userId, createdAt])
+  @@map("wishlist_items")
+}
+
+enum ProductStatus {
+  REMOVED
+  HIDDEN
+  ON_SALE
+  SOLD
+}

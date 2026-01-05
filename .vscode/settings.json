@@ -1,3 +1,5 @@
 {
-  "prisma.pinToPrisma6": true
+  "prisma.pinToPrisma6": true,
+  "commentTranslate.source": "Google",
+  "commentTranslate.targetLanguage": "en"
 }

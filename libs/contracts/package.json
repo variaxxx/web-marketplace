@@ -1,0 +1,11 @@
+{
+  "name": "@web-marketplace/contracts",
+  "version": "1.0.0",
+  "files": [
+    "proto",
+    "src/gen"
+  ],
+  "scripts": {
+    "generate": "protoc -I ./proto ./proto/*.proto --ts_proto_out=./src/gen --ts_proto_opt=nestJs=true,package=omit,stringEnums=true"
+  }
+}

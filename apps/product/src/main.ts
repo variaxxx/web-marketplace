@@ -1,15 +1,14 @@
 import { AppModule } from "./app/app.module";
 import { Logger, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-import { MicroserviceOptions, Transport } from "@nestjs/microservices";
+import { Transport } from "@nestjs/microservices";
 import { MicroserviceErrorFilter, MicroserviceRMQQueue } from "@web-marketplace/shared";
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
 
-  app.useGlobalFilters(
-    new MicroserviceErrorFilter(),
-  );
+  app.useLogger(["log", "error", "warn", "debug", "verbose"]);
+  app.useGlobalFilters(new MicroserviceErrorFilter());
 
   app.useGlobalPipes(new ValidationPipe(
     {
@@ -19,21 +18,23 @@ async function bootstrap(): Promise<void> {
     },
   ));
 
-  await app.listen(process.env.PORT);
+  await app.listen(process.env.PRODUCT_SERVICE_PORT);
 
-  app.connectMicroservice<MicroserviceOptions>({
+  app.connectMicroservice({
     transport: Transport.RMQ,
     options: {
       urls: [process.env.RMQ_URL],
       queue: MicroserviceRMQQueue.PRODUCT_SERVICE,
-      queueOptions: { durable: true },
+      queueOptions: {
+        durable: true,
+      },
     },
   });
 
   await app.startAllMicroservices();
 
   Logger.log(
-    `🚀 Product service is running...`,
+    `🚀 Auth service is running...`,
   );
 }
 

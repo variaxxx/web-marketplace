@@ -1,0 +1,82 @@
+syntax = "proto3";
+
+package seller_application.v1;
+
+import "google/protobuf/timestamp.proto";
+import "auth.proto";
+import "user.proto";
+
+service SellerApplicationService {
+  rpc Create (CreateSellerApplicationPayload) returns (SellerApplicationInfoResponse);
+  rpc Approve (ApproveSellerApplicationPayload) returns (SellerApplicationInfoResponse);
+  rpc Reject (RejectSellerApplicationPayload) returns (SellerApplicationInfoResponse);
+  rpc Cancel (CancelSellerApplicationPayload) returns (SellerApplicationInfoResponse);
+  rpc FindOne (FindOneSellerApplicationPayload) returns (SellerApplicationInfoResponse);
+  rpc FindMany (FindManySellerApplicationsPayload) returns (FindManySellerApplicationsResponse);
+}
+
+message CreateSellerApplicationPayload {
+  string store_name = 1;
+  string store_description = 2;
+
+  auth.v1.UserInfo user_info = 3;
+}
+
+message ApproveSellerApplicationPayload {
+  string application_id = 1;
+
+  auth.v1.UserInfo user_info = 2;
+}
+
+message RejectSellerApplicationPayload {
+  string application_id = 1;
+  optional string rejection_reason = 2;
+
+  auth.v1.UserInfo user_info = 3;
+}
+
+message CancelSellerApplicationPayload {
+  string application_id = 1;
+
+  auth.v1.UserInfo user_info = 2;
+}
+
+message FindOneSellerApplicationPayload {
+  string application_id = 1;
+
+  auth.v1.UserInfo user_info = 2;
+}
+
+message FindManySellerApplicationsPayload {
+  optional int32 limit = 1;
+  optional int32 offset = 2;
+  optional SellerApplicationStatus status = 3;
+
+  auth.v1.UserInfo user_info = 4;
+}
+
+message SellerApplicationInfoResponse {
+  string id = 1;
+  google.protobuf.Timestamp created_at = 2;
+  string user_id = 3;
+  SellerApplicationStatus status = 4;
+  string store_name = 5;
+  string store_description = 6;
+  optional google.protobuf.Timestamp decision_made_at = 7;
+  optional user.v1.UserDisplayInfo reviewed_by = 8;
+  optional string rejection_reason = 9;
+}
+
+message FindManySellerApplicationsResponse {
+  int32 total = 1;
+  int32 count = 2;
+  repeated SellerApplicationInfoResponse items = 3;
+}
+
+enum SellerApplicationStatus {
+  UNSPECIFIED = 0;
+  PENDING = 1;
+  APPROVED = 2;
+  REJECTED = 3;
+  CANCELLED = 4;
+}

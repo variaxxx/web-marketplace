@@ -1,0 +1,55 @@
+syntax = "proto3";
+
+package auth.v1;
+
+service AuthService {
+  rpc Login (LoginPayload) returns (TokensResponse);
+  rpc Registration (RegistrationPayload) returns (RegistrationResponse);
+  rpc RefreshToken (RefreshTokenPayload) returns (TokensResponse);
+  rpc VerifyEmail (VerifyEmailPayload) returns (TokensResponse);
+}
+
+message Device {
+  optional string browser_name = 1;
+  optional string os_name = 2;
+  optional string engine_name = 3;
+  optional string device_vendor = 4;
+  optional string device_model = 5;
+}
+
+message LoginPayload {
+  string email = 1;
+  string password = 2;
+  Device device = 3;
+}
+
+message RegistrationPayload {
+  string email = 1;
+  string password = 2;
+}
+
+message RefreshTokenPayload {
+  string refresh_token = 1;
+  Device device = 2;
+}
+
+message VerifyEmailPayload {
+  string email = 1;
+  int32 code = 2;
+  Device device = 3;
+}
+
+message TokensResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+}
+
+message RegistrationResponse {
+  bool status = 1;
+}
+
+message UserInfo {
+  string user_id = 1;
+  string email = 2;
+  string role  = 3;
+}

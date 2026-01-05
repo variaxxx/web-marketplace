@@ -1,43 +1,47 @@
 import { CategoryService } from "./category.service";
-import { Controller } from "@nestjs/common";
-import { MessagePattern, Payload } from "@nestjs/microservices";
-import { CategoryInfoResponse, CreateCategoryPayload, DeleteCategoryPayload, EditCategoryPayload, FindOneCategoryPayload, PRODUCT_PATTERNS } from "@web-marketplace/shared";
+import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Patch, Post } from "@nestjs/common";
+import { CategoryInfoResponse, CreateCategoryPayload, DeleteCategoryPayload, EditCategoryPayload, FindOneCategoryPayload } from "@web-marketplace/shared";
 
-@Controller()
+@Controller("category")
 export class CategoryController {
   constructor(
     private readonly categoryService: CategoryService,
   ) {}
 
-  @MessagePattern(PRODUCT_PATTERNS.CATEGORY.CREATE)
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
   async create(
-    @Payload() payload: CreateCategoryPayload,
+    @Body() payload: CreateCategoryPayload,
   ): Promise<CategoryInfoResponse> {
     return await this.categoryService.create(payload);
   }
 
-  @MessagePattern(PRODUCT_PATTERNS.CATEGORY.EDIT)
+  @Patch()
+  @HttpCode(HttpStatus.OK)
   async edit(
-    @Payload() payload: EditCategoryPayload,
+    @Body() payload: EditCategoryPayload,
   ): Promise<CategoryInfoResponse> {
     return await this.categoryService.edit(payload);
   }
 
-  @MessagePattern(PRODUCT_PATTERNS.CATEGORY.DELETE)
+  @Delete()
+  @HttpCode(HttpStatus.NO_CONTENT)
   async delete(
-    @Payload() payload: DeleteCategoryPayload,
+    @Body() payload: DeleteCategoryPayload,
   ): Promise<void> {
     return await this.categoryService.delete(payload);
   }
 
-  @MessagePattern(PRODUCT_PATTERNS.CATEGORY.FIND_ALL)
+  @Get("findAll")
+  @HttpCode(HttpStatus.OK)
   async findAll(): Promise<CategoryInfoResponse[]> {
     return await this.categoryService.findAll();
   }
 
-  @MessagePattern(PRODUCT_PATTERNS.CATEGORY.FIND_ONE)
+  @Get("findOne")
+  @HttpCode(HttpStatus.OK)
   async findOne(
-    @Payload() payload: FindOneCategoryPayload,
+    @Body() payload: FindOneCategoryPayload,
   ): Promise<CategoryInfoResponse> {
     return await this.categoryService.findOne(payload);
   }

@@ -1,0 +1,27 @@
+{
+  "name": "contracts",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/contracts/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {
+    "generate": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npm run generate",
+        "cwd": "libs/contracts"
+      }
+    },
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "assets": ["libs/contracts/proto/*.proto"],
+        "outputPath": "dist/libs/contracts",
+        "tsConfig": "libs/contracts/tsconfig.lib.json",
+        "main": "libs/contracts/src/index.ts",
+        "declaration": true
+      }
+    }
+  }
+}

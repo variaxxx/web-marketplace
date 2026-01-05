@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package media.v1;
+
+service MediaService {
+  rpc UploadFile (UploadFilePayload) returns (UploadFileResponse);
+  rpc GetFile (GetFilePayload) returns (GetFileResponse);
+}
+
+enum MediaBucket {
+  AVATAR = 0;
+  REVIEW = 1;
+  MESSAGE = 2;
+  PRODUCT = 3;
+}
+
+message UploadFilePayload {
+  string content_type = 1;
+  string filename = 2;
+  MediaBucket bucket = 3;
+  bytes file = 4;
+  optional int32 resize_width = 5;
+  optional int32 resize_height = 6;
+}
+
+message UploadFileResponse {
+  string url = 1;
+}
+
+message GetFilePayload {
+  string url = 1;
+}
+
+message GetFileResponse {
+  bytes file = 1;
+  string content_type = 2;
+}

@@ -1,0 +1,19 @@
+export enum MICROSERVICE_NAME {
+  AUTH_SERVICE = "AUTH_SERVICE",
+  NOTIFICATION_SERVICE = "NOTIFICATION_SERVICE",
+  USER_SERVICE = "USER_SERVICE",
+  PRODUCT_SERVICE = "PRODUCT_SERVICE",
+  REVIEW_SERVICE = "REVIEW_SERVICE",
+  MEDIA_SERVICE = "MEDIA_SERVICE",
+};
+
+export type MicroserviceName = keyof typeof MICROSERVICE_NAME;
+
+export const MICROSERVICE_RMQ_QUEUE = {
+  AUTH_SERVICE: "auth_queue",
+  NOTIFICATION_SERVICE: "notification_queue",
+  USER_SERVICE: "user_queue",
+  PRODUCT_SERVICE: "product_queue",
+  REVIEW_SERVICE: "review_queue",
+  MEDIA_SERVICE: "media_queue",
+};

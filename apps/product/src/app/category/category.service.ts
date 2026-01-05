@@ -1,6 +1,5 @@
 import { PrismaService } from "../../db/prisma.service";
-import { Injectable } from "@nestjs/common";
-import { RpcException } from "@nestjs/microservices";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { CategoryInfoResponse, CreateCategoryPayload, DeleteCategoryPayload, EditCategoryPayload, FindOneCategoryPayload, normalizeText, PrismaQueryError } from "@web-marketplace/shared";
 
 interface Category {
@@ -52,20 +51,12 @@ export class CategoryService {
         where: { id: payload.parentCategoryId },
       });
 
-      if (!parent) {
-        throw new RpcException({
-          status: 400,
-          message: "Parent category not found",
-        });
-      }
+      if (!parent)
+        throw new BadRequestException("Parent category not found");
 
       const parentSlug = parent.slug;
-      if (slug.includes(" ")) {
-        throw new RpcException({
-          status: 400,
-          message: "Slug node can`t include whitespaces",
-        });
-      }
+      if (slug.includes(" "))
+        throw new BadRequestException("Slug node can`t include whitespaces");
       slug = `${parentSlug}/${slug}`;
     }
 
@@ -81,12 +72,8 @@ export class CategoryService {
         slug: true,
       },
     }).catch((e) => {
-      if (e.code === PrismaQueryError.UniqueConstraintViolation) {
-        throw new RpcException({
-          status: 400,
-          message: "Category with this slug already exists",
-        });
-      }
+      if (e.code === PrismaQueryError.UniqueConstraintViolation)
+        throw new BadRequestException("Category with this slug already exists");
       throw e;
     });
 
@@ -108,12 +95,8 @@ export class CategoryService {
         },
       });
 
-      if (!parent) {
-        throw new RpcException({
-          status: 404,
-          message: "Category not found",
-        });
-      }
+      if (!parent)
+        throw new NotFoundException("Category not found");
 
       const slugNode = normalizeText(payload.slugNode, "slugNode");
       slug = `${parent.parent.slug}/${slugNode}`;
@@ -133,12 +116,8 @@ export class CategoryService {
         slug: true,
       },
     }).catch((e) => {
-      if (e.code === PrismaQueryError.RecordsNotFound) {
-        throw new RpcException({
-          status: 404,
-          message: "Category not found",
-        });
-      }
+      if (e.code === PrismaQueryError.RecordsNotFound)
+        throw new NotFoundException("Category not found");
       throw e;
     });
 
@@ -225,15 +204,9 @@ export class CategoryService {
       }),
     ]).catch((e) => {
       if (e.code === PrismaQueryError.RecordsNotFound) {
-        throw new RpcException({
-          status: 404,
-          message: "Category not found",
-        });
+        throw new NotFoundException("Category not found");
       } else if (e.code === PrismaQueryError.ForeignConstraintViolation) {
-        throw new RpcException({
-          status: 404,
-          message: "Redirect category not found",
-        });
+        throw new BadRequestException("Redirect category not found");
       }
       throw e;
     });

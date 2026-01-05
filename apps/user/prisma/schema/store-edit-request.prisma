@@ -1,0 +1,53 @@
+model StoreEditRequest {
+  id String @id @default(uuid())
+
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  decisionMadeAt DateTime? @map("decision_made_at")
+
+  status          StoreEditRequestStatus @default(PENDING)
+  rejectionReason String?                @map("rejection_reason")
+
+  reviewedById String? @map("reviewed_by_id")
+  reviewedBy   User?   @relation(fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  storeId String @map("store_id")
+  store   Store  @relation(fields: [storeId], references: [ownerId], onDelete: Cascade)
+
+  storeEditFieldChanges StoreEditFieldChange[]
+
+  @@index([storeId, status])
+  @@index([status, createdAt])
+  @@map("store_edit_requests")
+}
+
+enum StoreEditRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model StoreEditFieldChange {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  editRequestId String           @map("edit_request_id")
+  editRequest   StoreEditRequest @relation(fields: [editRequestId], references: [id], onDelete: Cascade)
+
+  fieldName String          @map("field_name")
+  action    StoreEditAction
+  oldValue  String?         @map("old_value")
+  newValue  String?         @map("new_value")
+
+  @@unique([editRequestId, fieldName])
+  @@index([editRequestId])
+  @@map("store_edit_field_changes")
+}
+
+enum StoreEditAction {
+  SET
+  CLEAR
+  UNCHANGED
+}

@@ -10,7 +10,10 @@
     "module": "esnext",
     "moduleResolution": "node",
     "paths": {
-      "@web-marketplace/shared": ["libs/shared/src/index.ts"]
+      "@web-marketplace/api": ["libs/api/src/index.ts"],
+      "@web-marketplace/backend": ["libs/backend/src/index.ts"],
+      "@web-marketplace/contracts": ["libs/contracts/src/index.ts"],
+      "@web-marketplace/contracts/*": ["libs/contracts/src/*"]
     },
     "declaration": false,
     "importHelpers": true,

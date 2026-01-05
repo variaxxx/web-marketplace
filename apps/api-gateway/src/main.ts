@@ -1,8 +1,5 @@
-import { AppModule } from "./app/app.module";
-import { AllExceptionFilter } from "./common/filters/all-exception.filter";
-import { RpcExceptionFilter } from "./common/filters/rpc.filter";
-import { LoggerInterceptor } from "./common/interceptors/logger.interceptor";
-import { ResponseFormatInterceptor } from "./common/interceptors/res-format.interceptor";
+import { AppModule } from "./core/app.module";
+import { AllExceptionFilter, LoggerInterceptor, ResponseFormatInterceptor } from "./shared";
 import { BadRequestException, Logger, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
@@ -21,7 +18,6 @@ async function bootstrap(): Promise<void> {
   ));
   app.useGlobalFilters(
     new AllExceptionFilter(),
-    new RpcExceptionFilter(),
   );
   app.useGlobalInterceptors(
     new ResponseFormatInterceptor(),
@@ -31,6 +27,7 @@ async function bootstrap(): Promise<void> {
 
   const swaggerCfg = new DocumentBuilder()
     .setTitle("web-marketplace")
+    .addCookieAuth("accessToken")
     .build();
 
   const swaggerDocFactory = (): any => SwaggerModule.createDocument(app, swaggerCfg);

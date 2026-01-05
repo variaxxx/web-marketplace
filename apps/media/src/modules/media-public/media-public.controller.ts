@@ -1,0 +1,28 @@
+import { MinioService } from "../../infra/minio/minio.service";
+import { Controller, Get, NotFoundException, Req, Res } from "@nestjs/common";
+import { Request, Response } from "express";
+
+@Controller()
+export class MediaPublicController {
+  constructor(
+    private readonly minio: MinioService,
+  ) {}
+
+  @Get("*path")
+  async pfp(
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    const bucketName = req.path.split("/")[1];
+    const filename = req.path.replace(`${bucketName}/`, "");
+
+    const stream = await this.minio.getStream(bucketName, filename).catch((e) => {
+      if (e.code === "NoSuchKey") {
+        throw new NotFoundException("Not found");
+      }
+      throw e;
+    });
+
+    stream.pipe(res);
+  }
+}

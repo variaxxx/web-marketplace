@@ -1,0 +1,4 @@
+export enum MICROSERVICE_CLIENT_NAMES {
+  MEDIA_RMQ = "MEDIA_RMQ",
+  AUTH_RMQ = "AUTH_RMQ",
+};

@@ -1,0 +1,20 @@
+model Address {
+  id String @id @default(uuid())
+
+  createdAt DateTime @default(now()) @map("created_at")
+  isDeleted Boolean  @default(false) @map("is_deleted")
+
+  userId String @map("user_id")
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  label     String?
+  city      String
+  street    String
+  house     String
+  latitude  Decimal
+  longitude Decimal
+
+  @@index([userId, createdAt])
+  @@index([userId, isDeleted])
+  @@map("addresses")
+}

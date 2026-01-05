@@ -1,0 +1,4 @@
+export enum MICROSERVICE_CLIENT_NAMES {
+  MAIL_RMQ = "MAIL_RMQ",
+  USER_RMQ = "USER_RMQ",
+};
