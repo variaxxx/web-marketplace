@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package common.v1;
+
+enum Order {
+  UNSPECIFIED = 0;
+  ASC = 1;
+  DESC = 2;
+}
+
+message SortOption {
+  string field = 1;
+  Order order = 2;
+}

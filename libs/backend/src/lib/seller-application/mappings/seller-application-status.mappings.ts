@@ -15,7 +15,7 @@ type ValidGrpcStatus = Exclude<
 
 export const sellerApplicationStatusMappings = {
   fromGrpc: (status: GrpcStatus): SellerApplicationStatus | null =>
-    status in STATUS_MAP ? STATUS_MAP[status as ValidGrpcStatus] : null,
+    status in STATUS_MAP ? STATUS_MAP[status as ValidGrpcStatus] : status.toString() as SellerApplicationStatus,
 
   toGrpc: (status: SellerApplicationStatus): GrpcStatus =>
     GrpcStatus[status],

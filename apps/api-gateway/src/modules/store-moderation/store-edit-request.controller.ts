@@ -1,11 +1,10 @@
 import { AllowedRoles, ApiFormattedFindManyResponse, ApiFormattedResponse, UserInfo } from "../../shared";
-import { StoreEditRequestResponse } from "../store/dto";
-import { FindManyStoreEditRequestsQuery, RejectStoreEditRequest } from "./dto";
+import { FindManyStoreEditRequestsQuery, RejectStoreEditRequest, StoreEditRequestResponse } from "./dto";
 import { StoreModerationClientGrpc } from "./store-moderation.grpc";
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from "@nestjs/common";
 import { ApiOperation, ApiQuery } from "@nestjs/swagger";
 import { FindManyApiResponse } from "@web-marketplace/api";
-import { AuthTokenPayload, STORE_EDIT_REQUEST_STATUS, storeEditRequestStatusMappings, timestampToDate, USER_ROLE } from "@web-marketplace/backend";
+import { AuthTokenPayload, SORT_ORDER, sortOrderMappings, STORE_EDIT_REQUEST_STATUS, storeEditRequestStatusMappings, timestampToDate, USER_ROLE } from "@web-marketplace/backend";
 import { StoreEditRequestResponse as GrpcStoreEditRequestResponse, ValueChange_OperationType } from "@web-marketplace/contracts/gen/store";
 
 @Controller("store/edit-requests")
@@ -94,6 +93,16 @@ export class StoreEditRequestController {
     enum: STORE_EDIT_REQUEST_STATUS,
     required: false,
   })
+  @ApiQuery({
+    name: "sortBy",
+    enum: ["createdAt", "decisionMadeAt"],
+    required: false,
+  })
+  @ApiQuery({
+    name: "sortOrder",
+    enum: SORT_ORDER,
+    required: false,
+  })
   async findManyEditRequests(
     @UserInfo() userInfo: AuthTokenPayload,
     @Query() query: FindManyStoreEditRequestsQuery,
@@ -105,6 +114,12 @@ export class StoreEditRequestController {
       offset: query.offset,
       ownerId: query.ownerId,
       status: storeEditRequestStatusMappings.toGrpc(query.status),
+      sortBy: query.sortBy
+        ? {
+            field: query.sortBy,
+            order: sortOrderMappings.toGrpc(query.sortOrder ?? "desc"),
+          }
+        : undefined,
     });
 
     return {

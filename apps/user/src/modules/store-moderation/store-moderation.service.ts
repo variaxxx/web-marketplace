@@ -3,7 +3,7 @@ import { StoreUpdates } from "../../shared";
 import { FIELD_CHANGES_SELECT } from "./store-moderation.constants";
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/generated/userClient";
-import { clamp, dateToTimestamp, GRPC_ERROR_CODE, MicroserviceError, normalizeText, PrismaQueryError, STORE_EDIT_REQUEST_STATUS, storeEditRequestStatusMappings, USER_ROLE } from "@web-marketplace/backend";
+import { clamp, dateToTimestamp, GRPC_ERROR_CODE, MicroserviceError, normalizeText, PrismaQueryError, sortOrderMappings, STORE_EDIT_REQUEST_STATUS, storeEditRequestStatusMappings, USER_ROLE, UserRole } from "@web-marketplace/backend";
 import { ApproveStoreEditPayload, GetStoreEditRequestPayload, GetStoreEditRequestsPayload, RejectStoreEditPayload, StoreEditRequestResponse, StoreEditRequestsResponse, ValueChange_OperationType } from "@web-marketplace/contracts/gen/store";
 
 @Injectable()
@@ -87,33 +87,48 @@ export class StoreModerationService {
       where: { id: payload.requestId },
       include: {
         storeEditFieldChanges: { select: FIELD_CHANGES_SELECT },
+        reviewedBy: { select: { id: true, avatarUrl: true, name: true } },
       },
     });
 
     return this.toResponse(editRequest);
   }
 
-  // TODO: order
   public async getManyEditRequests(
     payload: GetStoreEditRequestsPayload,
   ): Promise<StoreEditRequestsResponse> {
+    const orderBy: Prisma.SellerApplicationOrderByWithAggregationInput = {};
+    const orderByFields = ["createdAt", "decisionMadeAt"];
+
+    const DEFAULT_SORT_FIELD = "createdAt";
+    const DEFAULT_SORT_ORDER = "desc";
+
+    if (payload.sortBy) {
+      if (!orderByFields.includes(payload.sortBy.field))
+        throw new MicroserviceError(GRPC_ERROR_CODE.INVALID_ARGUMENT, `Invalid sort field: ${payload.sortBy.field}`);
+
+      const order = sortOrderMappings.fromGrpc(payload.sortBy.order);
+
+      if (!order)
+        throw new MicroserviceError(GRPC_ERROR_CODE.INVALID_ARGUMENT, "Invalid sort order");
+
+      orderBy[payload.sortBy.field] = order;
+    } else {
+      orderBy[DEFAULT_SORT_FIELD] = DEFAULT_SORT_ORDER;
+    }
+
     const where: Prisma.StoreEditRequestWhereInput = {};
 
-    if (payload.status) {
+    if (payload.status)
       where.status = storeEditRequestStatusMappings.fromGrpc(payload.status);
-    }
-    if (payload.ownerId) {
-      where.store = {
-        ownerId: payload.ownerId,
-      };
-    }
+    if (payload.ownerId)
+      where.store = { ownerId: payload.ownerId };
     if (payload.storeId)
       where.storeId = payload.storeId;
-    if (payload.userInfo.role === USER_ROLE.SELLER) {
-      where.store = {
-        ownerId: payload.userInfo.userId,
-      };
-    }
+    if (payload.userInfo.role === USER_ROLE.SELLER)
+      where.store = { ownerId: payload.userInfo.userId };
+    if (payload.sortBy.field === "decisionMadeAt")
+      where.decisionMadeAt = { not: null };
 
     const [editRequests, totalCount] = await this.prisma.$transaction([
       this.prisma.storeEditRequest.findMany({
@@ -122,7 +137,9 @@ export class StoreModerationService {
         skip: payload.offset ? Math.max(payload.offset, 0) : undefined,
         include: {
           storeEditFieldChanges: { select: FIELD_CHANGES_SELECT },
+          reviewedBy: { select: { id: true, avatarUrl: true, name: true } },
         },
+        orderBy,
       }),
       this.prisma.storeEditRequest.count({ where }),
     ]);
@@ -130,12 +147,13 @@ export class StoreModerationService {
     return {
       total: totalCount,
       count: editRequests.length,
-      items: editRequests.map(r => this.toResponse(r)),
+      items: editRequests.map(r => this.toResponse(r, payload.userInfo.role as UserRole)),
     };
   }
 
   private toResponse(
     editRequest: any,
+    userRole: UserRole = USER_ROLE.SELLER,
   ): StoreEditRequestResponse {
     return {
       id: editRequest.id,
@@ -148,6 +166,15 @@ export class StoreModerationService {
         oldValue: i.oldValue,
         newValue: i.newValue,
       })),
+      decisionMadeAt: editRequest.decisionMadeAt ? dateToTimestamp(editRequest.decisionMadeAt) : undefined,
+      rejectionReason: editRequest.rejectionReason ?? undefined,
+      reviewedBy: userRole === USER_ROLE.ADMIN && editRequest.reviewedById
+        ? {
+            id: editRequest.reviewedBy.id,
+            name: editRequest.reviewedBy.name ?? undefined,
+            avatarUrl: editRequest.reviewedBy.avatarUrl ?? undefined,
+          }
+        : undefined,
     };
   }
 

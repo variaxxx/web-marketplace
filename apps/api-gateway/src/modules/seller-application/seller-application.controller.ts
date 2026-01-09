@@ -4,7 +4,7 @@ import { SellerApplicationClientGrpc } from "./seller-application.grpc";
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from "@nestjs/common";
 import { ApiOperation, ApiQuery } from "@nestjs/swagger";
 import { FindManyApiResponse } from "@web-marketplace/api";
-import { AuthTokenPayload, SELLER_APPLICATION_STATUS, sellerApplicationStatusMappings, timestampToDate, USER_ROLE } from "@web-marketplace/backend";
+import { AuthTokenPayload, SELLER_APPLICATION_STATUS, sellerApplicationStatusMappings, SORT_ORDER, sortOrderMappings, timestampToDate, USER_ROLE } from "@web-marketplace/backend";
 import { SellerApplicationInfoResponse as GrpcSellerApplicationInfo } from "@web-marketplace/contracts/gen/seller-application";
 
 @Controller("seller-applications")
@@ -145,6 +145,11 @@ export class SellerApplicationController {
     type: Number,
     required: false,
   })
+  @ApiQuery({
+    name: "sortOrder",
+    enum: SORT_ORDER,
+    required: false,
+  })
   @Get()
   @HttpCode(HttpStatus.OK)
   async findMany(
@@ -156,6 +161,12 @@ export class SellerApplicationController {
       status: query.status ? sellerApplicationStatusMappings.toGrpc(query.status) : undefined,
       limit: query.limit,
       offset: query.offset,
+      sortBy: query.sortOrder
+        ? {
+            field: "createdAt",
+            order: sortOrderMappings.toGrpc(query.sortOrder),
+          }
+        : undefined,
     });
 
     return {

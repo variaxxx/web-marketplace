@@ -6,6 +6,7 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 import "auth.proto";
 import "user.proto";
+import "common.proto";
 
 service StoreService {
   rpc GetInfo (GetStoreInfoPayload) returns (StoreInfoResponse);
@@ -59,8 +60,9 @@ message GetStoreEditRequestsPayload {
   optional int32 offset = 3;
   optional StoreEditRequestStatus status = 4;
   optional string store_id = 5;
+  optional common.v1.SortOption sort_by = 6;
 
-  auth.v1.UserInfo user_info = 6;
+  auth.v1.UserInfo user_info = 7;
 }
 
 message ApproveStoreEditPayload {

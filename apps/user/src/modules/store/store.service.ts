@@ -16,6 +16,8 @@ export class StoreService {
     };
   }
 
+  private readonly storeEditCooldownMins = 15;
+
   constructor(
     private readonly prisma: PrismaService,
   ) {}
@@ -66,14 +68,14 @@ export class StoreService {
         orderBy: { createdAt: "desc" },
       });
 
-      if (lastRequest && lastRequest.createdAt > new Date(Date.now() - MS_IN_MIN * 0.1))
+      if (lastRequest && lastRequest.createdAt > new Date(Date.now() - MS_IN_MIN * this.storeEditCooldownMins))
         throw new MicroserviceError(GRPC_ERROR_CODE.RESOURCE_EXHAUSTED, "Too many edit requests, try again later.");
 
       const fieldChanges = this.processChanges(payload.changes, oldStore);
 
       await tx.storeEditRequest.updateMany({
         where: { storeId: oldStore.id, status: STORE_EDIT_REQUEST_STATUS.PENDING },
-        data: { status: STORE_EDIT_REQUEST_STATUS.REJECTED },
+        data: { status: STORE_EDIT_REQUEST_STATUS.CANCELLED },
       });
 
       await tx.storeEditRequest.create({

@@ -8,6 +8,7 @@
 import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
 import { Observable } from "rxjs";
 import { UserInfo } from "./auth";
+import { SortOption } from "./common";
 import { Empty } from "./google/protobuf/empty";
 import { Timestamp } from "./google/protobuf/timestamp";
 import { UserDisplayInfo } from "./user";
@@ -58,6 +59,7 @@ export interface GetStoreEditRequestsPayload {
   offset?: number | undefined;
   status?: StoreEditRequestStatus | undefined;
   storeId?: string | undefined;
+  sortBy?: SortOption | undefined;
   userInfo: UserInfo | undefined;
 }
 

@@ -5,6 +5,7 @@ package seller_application.v1;
 import "google/protobuf/timestamp.proto";
 import "auth.proto";
 import "user.proto";
+import "common.proto";
 
 service SellerApplicationService {
   rpc Create (CreateSellerApplicationPayload) returns (SellerApplicationInfoResponse);
@@ -51,8 +52,9 @@ message FindManySellerApplicationsPayload {
   optional int32 limit = 1;
   optional int32 offset = 2;
   optional SellerApplicationStatus status = 3;
+  optional common.v1.SortOption sort_by = 4;
 
-  auth.v1.UserInfo user_info = 4;
+  auth.v1.UserInfo user_info = 5;
 }
 
 message SellerApplicationInfoResponse {

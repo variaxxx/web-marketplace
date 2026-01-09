@@ -4,7 +4,7 @@ import { SELLER_APPLICATION_SELECT } from "./seller-application.constants";
 import { Inject, Injectable } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { Prisma } from "@prisma/generated/userClient";
-import { AUTH_RMQ_PATTERN, ChangeUserRolePayload, dateToTimestamp, GRPC_ERROR_CODE, MicroserviceError, PrismaQueryError, SELLER_APPLICATION_STATUS, sellerApplicationStatusMappings, USER_ROLE } from "@web-marketplace/backend";
+import { AUTH_RMQ_PATTERN, ChangeUserRolePayload, dateToTimestamp, GRPC_ERROR_CODE, MicroserviceError, PrismaQueryError, SELLER_APPLICATION_STATUS, sellerApplicationStatusMappings, sortOrderMappings, USER_ROLE } from "@web-marketplace/backend";
 import { ApproveSellerApplicationPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, FindManySellerApplicationsPayload, FindManySellerApplicationsResponse, FindOneSellerApplicationPayload, RejectSellerApplicationPayload, SellerApplicationInfoResponse } from "@web-marketplace/contracts/gen/seller-application";
 import { firstValueFrom } from "rxjs";
 
@@ -174,14 +174,33 @@ export class SellerApplicationService {
     return this.toResponse(application, payload.userInfo.role);
   }
 
-  // TODO: order
   async findMany(
     payload: FindManySellerApplicationsPayload,
   ): Promise<FindManySellerApplicationsResponse> {
-    const where: any = {};
+    const orderBy: Prisma.SellerApplicationOrderByWithAggregationInput = {};
+    const orderByFields = ["createdAt"];
+
+    const DEFAULT_SORT_FIELD = "createdAt";
+    const DEFAULT_SORT_ORDER = "desc";
+
+    if (payload.sortBy) {
+      if (!orderByFields.includes(payload.sortBy.field))
+        throw new MicroserviceError(GRPC_ERROR_CODE.INVALID_ARGUMENT, `Invalid sort field: ${payload.sortBy.field}`);
+
+      const order = sortOrderMappings.fromGrpc(payload.sortBy.order);
+
+      if (!order)
+        throw new MicroserviceError(GRPC_ERROR_CODE.INVALID_ARGUMENT, "Invalid sort order");
+
+      orderBy[payload.sortBy.field] = order;
+    } else {
+      orderBy[DEFAULT_SORT_FIELD] = DEFAULT_SORT_ORDER;
+    }
+
+    const where: Prisma.SellerApplicationWhereInput = {};
 
     if (payload.status)
-      where.status = payload.status;
+      where.status = sellerApplicationStatusMappings.fromGrpc(payload.status);
     if (([USER_ROLE.SELLER, USER_ROLE.USER] as string[]).includes(payload.userInfo.role))
       where.userId = payload.userInfo.userId;
 
@@ -193,7 +212,7 @@ export class SellerApplicationService {
         where,
         skip: payload.offset ? Math.max(payload.limit, 0) : 0,
         take: payload.limit ? Math.min(20, Math.max(payload.limit, 0)) : 20,
-        orderBy: { createdAt: "desc" },
+        orderBy,
         select: SELLER_APPLICATION_SELECT,
       }),
     ]);

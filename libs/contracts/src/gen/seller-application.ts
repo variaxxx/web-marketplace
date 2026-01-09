@@ -8,6 +8,7 @@
 import { GrpcMethod, GrpcStreamMethod } from "@nestjs/microservices";
 import { Observable } from "rxjs";
 import { UserInfo } from "./auth";
+import { SortOption } from "./common";
 import { Timestamp } from "./google/protobuf/timestamp";
 import { UserDisplayInfo } from "./user";
 
@@ -53,6 +54,7 @@ export interface FindManySellerApplicationsPayload {
   limit?: number | undefined;
   offset?: number | undefined;
   status?: SellerApplicationStatus | undefined;
+  sortBy?: SortOption | undefined;
   userInfo: UserInfo | undefined;
 }
 
