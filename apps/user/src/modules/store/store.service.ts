@@ -1,27 +1,18 @@
 import { PrismaService } from "../../infra/db/prisma.service";
 import { STORE_FIELDS_CONFIG, StoreUpdates } from "../../shared";
+import { STORE_SELECT } from "./store.constants";
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/generated/userClient";
-import { dateToTimestamp, GRPC_ERROR_CODE, MicroserviceError, normalizeText, PrismaQueryError, STORE_EDIT_REQUEST_STATUS, storeEditRequestStatusMappings } from "@web-marketplace/backend";
-import { EditStoreInfoPayload, GetStoreInfoPayload, StoreEditRequestResponse, StoreInfoResponse, ValueChange, ValueChange_OperationType } from "@web-marketplace/contracts/gen/store";
+import { GRPC_ERROR_CODE, MicroserviceError, MS_IN_MIN, normalizeText, PrismaQueryError, STORE_EDIT_REQUEST_STATUS } from "@web-marketplace/backend";
+import { EditStoreInfoPayload, GetStoreInfoPayload, StoreInfoResponse, ValueChange } from "@web-marketplace/contracts/gen/store";
 
-const storeSelect = {
-  ownerId: true,
-  name: true,
-  description: true,
-  avatarUrl: true,
-};
-
-// TODO: made optional desc
-// TODO: set pfp
 @Injectable()
 export class StoreService {
   private toResponse(
-    store: Prisma.StoreGetPayload<{ select: typeof storeSelect }>,
+    store: Prisma.StoreGetPayload<{ select: typeof STORE_SELECT }>,
   ): StoreInfoResponse {
     return {
       ...store,
-      id: store.ownerId,
     };
   }
 
@@ -41,7 +32,7 @@ export class StoreService {
 
     const store = await this.prisma.store.findUnique({
       where,
-      select: storeSelect,
+      select: STORE_SELECT,
     });
 
     if (!store)
@@ -52,31 +43,42 @@ export class StoreService {
 
   async editInfo(
     payload: EditStoreInfoPayload,
-  ): Promise<StoreEditRequestResponse> {
-    const editRequest = await this.prisma.$transaction(async (tx) => {
+  ): Promise<void> {
+    if (!payload.changes || !payload.changes.length)
+      throw new MicroserviceError(GRPC_ERROR_CODE.INVALID_ARGUMENT, "No changes were provided");
+
+    await this.prisma.$transaction(async (tx) => {
       const oldStore = await tx.store.findUnique({
         where: { ownerId: payload.userInfo.userId },
-        select: { name: true, description: true, avatarUrl: true },
+        select: { id: true, name: true, description: true, avatarUrl: true },
       });
 
       if (!oldStore)
         throw new MicroserviceError(GRPC_ERROR_CODE.NOT_FOUND, "Store not found");
 
-      const oldRequest = await tx.storeEditRequest.findFirst({
+      const lastRequest = await tx.storeEditRequest.findFirst({
         where: {
-          storeId: payload.userInfo.userId,
+          store: { ownerId: payload.userInfo.userId },
           status: STORE_EDIT_REQUEST_STATUS.PENDING,
         },
+        select: { createdAt: true },
+        take: 1,
+        orderBy: { createdAt: "desc" },
       });
 
-      if (oldRequest)
-        throw new MicroserviceError(GRPC_ERROR_CODE.PERMISSION_DENIED, "You already have a pending edit request");
+      if (lastRequest && lastRequest.createdAt > new Date(Date.now() - MS_IN_MIN * 0.1))
+        throw new MicroserviceError(GRPC_ERROR_CODE.RESOURCE_EXHAUSTED, "Too many edit requests, try again later.");
 
       const fieldChanges = this.processChanges(payload.changes, oldStore);
 
-      const editRequest = await tx.storeEditRequest.create({
+      await tx.storeEditRequest.updateMany({
+        where: { storeId: oldStore.id, status: STORE_EDIT_REQUEST_STATUS.PENDING },
+        data: { status: STORE_EDIT_REQUEST_STATUS.REJECTED },
+      });
+
+      await tx.storeEditRequest.create({
         data: {
-          storeId: payload.userInfo.userId,
+          storeId: oldStore.id,
           status: STORE_EDIT_REQUEST_STATUS.PENDING,
           storeEditFieldChanges: { createMany: { data: fieldChanges } },
         },
@@ -91,22 +93,7 @@ export class StoreService {
           },
         },
       });
-
-      return editRequest;
     });
-
-    return {
-      id: editRequest.id,
-      createdAt: dateToTimestamp(editRequest.createdAt),
-      status: storeEditRequestStatusMappings.toGrpc(editRequest.status),
-      storeId: editRequest.storeId,
-      changes: editRequest.storeEditFieldChanges.map(i => ({
-        fieldName: i.fieldName,
-        type: i.action === "CLEAR" ? ValueChange_OperationType.CLEAR : ValueChange_OperationType.SET,
-        oldValue: i.oldValue,
-        newValue: i.newValue,
-      })),
-    };
   }
 
   public async editInfoImmediate(
@@ -115,7 +102,7 @@ export class StoreService {
     const changes = this.processImmediateChanges(payload.changes);
 
     return await this.prisma.store.update({
-      where: { ownerId: payload.storeId },
+      where: { id: payload.storeId },
       data: {
         name: changes.name,
         description: changes.description,
@@ -166,7 +153,7 @@ export class StoreService {
 
       const config = STORE_FIELDS_CONFIG[fieldName];
 
-      if (change.type === ValueChange_OperationType.CLEAR) {
+      if (change.type.toString() === "CLEAR") {
         if (config.required)
           throw new MicroserviceError(GRPC_ERROR_CODE.INVALID_ARGUMENT, `${fieldName} is required`);
 
@@ -174,7 +161,7 @@ export class StoreService {
           fieldName,
           action: "CLEAR",
         });
-      } else if (change.type === ValueChange_OperationType.SET) {
+      } else if (change.type.toString() === "SET") {
         const newValue = normalizeText(change.newValue, fieldName);
 
         if (newValue.length > config.maxLength)
@@ -189,6 +176,8 @@ export class StoreService {
           newValue,
           oldValue: store ? store[fieldName] : undefined,
         });
+      } else {
+        throw new MicroserviceError(GRPC_ERROR_CODE.INVALID_ARGUMENT, "Invalid value change action");
       }
 
       processedFields.add(fieldName);

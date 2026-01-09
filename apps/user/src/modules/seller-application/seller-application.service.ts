@@ -1,34 +1,17 @@
 import { MICROSERVICE_CLIENT_NAMES } from "../../core/config/microservice-client.names";
 import { PrismaService } from "../../infra/db/prisma.service";
+import { SELLER_APPLICATION_SELECT } from "./seller-application.constants";
 import { Inject, Injectable } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { Prisma } from "@prisma/generated/userClient";
-import { AUTH_PATTERNS, ChangeUserRolePayload, dateToTimestamp, GRPC_ERROR_CODE, MicroserviceError, PrismaQueryError, SELLER_APPLICATION_STATUS, sellerApplicationStatusMappings, USER_ROLE } from "@web-marketplace/backend";
+import { AUTH_RMQ_PATTERN, ChangeUserRolePayload, dateToTimestamp, GRPC_ERROR_CODE, MicroserviceError, PrismaQueryError, SELLER_APPLICATION_STATUS, sellerApplicationStatusMappings, USER_ROLE } from "@web-marketplace/backend";
 import { ApproveSellerApplicationPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, FindManySellerApplicationsPayload, FindManySellerApplicationsResponse, FindOneSellerApplicationPayload, RejectSellerApplicationPayload, SellerApplicationInfoResponse } from "@web-marketplace/contracts/gen/seller-application";
 import { firstValueFrom } from "rxjs";
-
-const sellerApplicationSelect = {
-  id: true,
-  createdAt: true,
-  userId: true,
-  status: true,
-  storeName: true,
-  storeDescription: true,
-  decisionMadeAt: true,
-  rejectionReason: true,
-  reviewedBy: {
-    select: {
-      id: true,
-      name: true,
-      avatarUrl: true,
-    },
-  },
-};
 
 @Injectable()
 export class SellerApplicationService {
   private toResponse(
-    application: Prisma.SellerApplicationGetPayload<{ select: typeof sellerApplicationSelect }>,
+    application: Prisma.SellerApplicationGetPayload<{ select: typeof SELLER_APPLICATION_SELECT }>,
     role: string,
   ): SellerApplicationInfoResponse {
     const status = sellerApplicationStatusMappings.toGrpc(application.status);
@@ -70,9 +53,9 @@ export class SellerApplicationService {
         userId: payload.userInfo.userId,
         status: SELLER_APPLICATION_STATUS.PENDING,
         storeName: payload.storeName,
-        storeDescription: payload.storeDescription,
+        storeDescription: payload.storeDescription ?? null,
       },
-      select: sellerApplicationSelect,
+      select: SELLER_APPLICATION_SELECT,
     });
 
     return this.toResponse(application, payload.userInfo.role);
@@ -92,7 +75,7 @@ export class SellerApplicationService {
           reviewedById: payload.userInfo.userId,
           decisionMadeAt: new Date(),
         },
-        select: sellerApplicationSelect,
+        select: SELLER_APPLICATION_SELECT,
       });
 
       await tx.store.create({
@@ -114,7 +97,7 @@ export class SellerApplicationService {
 
     // TODO: email notification
 
-    await firstValueFrom(this.authClient.emit(AUTH_PATTERNS.CHANGE_USER_ROLE, {
+    await firstValueFrom(this.authClient.emit(AUTH_RMQ_PATTERN.CHANGE_USER_ROLE, {
       userId: application.userId,
       role: USER_ROLE.SELLER,
     } as ChangeUserRolePayload));
@@ -134,7 +117,7 @@ export class SellerApplicationService {
       data: {
         status: SELLER_APPLICATION_STATUS.CANCELLED,
       },
-      select: sellerApplicationSelect,
+      select: SELLER_APPLICATION_SELECT,
     }).catch((e) => {
       if (e.code === PrismaQueryError.RecordsNotFound)
         throw new MicroserviceError(GRPC_ERROR_CODE.NOT_FOUND, "Application not found");
@@ -158,7 +141,7 @@ export class SellerApplicationService {
         decisionMadeAt: new Date(),
         reviewedById: payload.userInfo.userId,
       },
-      select: sellerApplicationSelect,
+      select: SELLER_APPLICATION_SELECT,
     }).catch((e) => {
       if (e.code === PrismaQueryError.RecordsNotFound)
         throw new MicroserviceError(GRPC_ERROR_CODE.NOT_FOUND, "Application not found");
@@ -175,7 +158,7 @@ export class SellerApplicationService {
   ): Promise<SellerApplicationInfoResponse> {
     const application = await this.prisma.sellerApplication.findUnique({
       where: { id: payload.applicationId },
-      select: sellerApplicationSelect,
+      select: SELLER_APPLICATION_SELECT,
     });
 
     if (
@@ -191,6 +174,7 @@ export class SellerApplicationService {
     return this.toResponse(application, payload.userInfo.role);
   }
 
+  // TODO: order
   async findMany(
     payload: FindManySellerApplicationsPayload,
   ): Promise<FindManySellerApplicationsResponse> {
@@ -210,7 +194,7 @@ export class SellerApplicationService {
         skip: payload.offset ? Math.max(payload.limit, 0) : 0,
         take: payload.limit ? Math.min(20, Math.max(payload.limit, 0)) : 20,
         orderBy: { createdAt: "desc" },
-        select: sellerApplicationSelect,
+        select: SELLER_APPLICATION_SELECT,
       }),
     ]);
 

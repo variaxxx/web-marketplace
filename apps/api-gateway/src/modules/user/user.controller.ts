@@ -4,7 +4,7 @@ import { EditUserInfoRequest, UserInfoResponse } from "./dto";
 import { UserClientGrpc } from "./user.grpc";
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, UploadedFile, UseInterceptors } from "@nestjs/common";
 import { FileInterceptor } from "@nestjs/platform-express";
-import { ApiOperation } from "@nestjs/swagger";
+import { ApiBody, ApiConsumes, ApiOperation } from "@nestjs/swagger";
 import { AuthTokenPayload } from "@web-marketplace/backend";
 import { MediaBucket } from "@web-marketplace/contracts/gen/media";
 import { UserInfoResponse as UserInfoGrpcResponse } from "@web-marketplace/contracts/gen/user";
@@ -57,7 +57,19 @@ export class UserController {
     return this.toResponseDto(res);
   }
 
+  @ApiConsumes("multipart/form-data")
   @ApiOperation({ summary: "Change avatar" })
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        image: {
+          type: "string",
+          format: "binary",
+        },
+      },
+    },
+  })
   @ApiFormattedResponse(HttpStatus.OK, UserInfoResponse)
   @HttpCode(HttpStatus.OK)
   @Post("pfp")

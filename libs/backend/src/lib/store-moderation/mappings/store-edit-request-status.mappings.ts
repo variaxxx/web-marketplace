@@ -1,4 +1,4 @@
-import { STORE_EDIT_REQUEST_STATUS, StoreEditRequestStatus } from "../constants";
+import { STORE_EDIT_REQUEST_STATUS, StoreEditRequestStatus } from "../enums/store-edit-request-status.enum";
 import { StoreEditRequestStatus as GrpcStatus } from "@web-marketplace/contracts/gen/store";
 
 const STATUS_MAP = {
@@ -15,7 +15,7 @@ type ValidGrpcStatus = Exclude<
 
 export const storeEditRequestStatusMappings = {
   fromGrpc: (status: GrpcStatus): StoreEditRequestStatus | null =>
-    status in STATUS_MAP ? STATUS_MAP[status as ValidGrpcStatus] : null,
+    status in STATUS_MAP ? STATUS_MAP[status as ValidGrpcStatus] : status.toString() as StoreEditRequestStatus,
 
   toGrpc: (status: StoreEditRequestStatus): GrpcStatus =>
     GrpcStatus[status],

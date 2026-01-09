@@ -1,7 +1,7 @@
 import { MICROSERVICE_CLIENT_NAMES } from "../../shared";
 import { Inject } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
-import { AUTH_PATTERNS, RevokeRefreshTokenPayload } from "@web-marketplace/backend";
+import { AUTH_RMQ_PATTERN, RevokeRefreshTokenPayload } from "@web-marketplace/backend";
 import { Observable } from "rxjs";
 
 export class AuthClientRmq {
@@ -12,6 +12,6 @@ export class AuthClientRmq {
   public revokeRefreshToken(
     payload: RevokeRefreshTokenPayload,
   ): Observable<void> {
-    return this.rmqClient.emit(AUTH_PATTERNS.REVOKE_REFRESH_TOKEN, payload);
+    return this.rmqClient.emit(AUTH_RMQ_PATTERN.REVOKE_REFRESH_TOKEN, payload);
   }
 }

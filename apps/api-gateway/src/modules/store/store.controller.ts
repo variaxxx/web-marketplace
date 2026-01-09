@@ -1,16 +1,30 @@
-import { AllowedRoles, IsPublic, UserInfo } from "../../shared";
-import { EditStoreInfoRequest, StoreEditRequestResponse, StoreInfoResponse } from "./dto";
+import { MediaClientGrpc } from "../../infra/media/media.grpc";
+import { AllowedRoles, ApiFormattedResponse, IsPublic, pictureFileFilter, UserInfo } from "../../shared";
+import { EditStoreInfoRequest, StoreInfoResponse } from "./dto";
 import { StoreClientGrpc } from "./store.grpc";
-import { Body, Controller, Get, Param, Patch } from "@nestjs/common";
-import { AuthTokenPayload, normalizeText, storeEditRequestStatusMappings, timestampToDate, USER_ROLE } from "@web-marketplace/backend";
+import { BadRequestException, Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, UploadedFile, UseInterceptors } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import { ApiBody, ApiConsumes, ApiOperation } from "@nestjs/swagger";
+import { AuthTokenPayload, normalizeText, USER_ROLE } from "@web-marketplace/backend";
+import { MediaBucket } from "@web-marketplace/contracts/gen/media";
 import { ValueChange, ValueChange_OperationType } from "@web-marketplace/contracts/gen/store";
+import { randomBytes } from "node:crypto";
 
 @Controller("stores")
 export class StoreController {
   constructor(
     private readonly client: StoreClientGrpc,
+    private readonly mediaClient: MediaClientGrpc,
   ) {}
 
+  @ApiOperation({
+    summary: "Getting information about your store",
+  })
+  @ApiFormattedResponse(
+    HttpStatus.OK,
+    StoreInfoResponse,
+  )
+  @HttpCode(HttpStatus.OK)
   @Get("my")
   @AllowedRoles(USER_ROLE.SELLER)
   async getMy(
@@ -28,56 +42,70 @@ export class StoreController {
     };
   }
 
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        avatar: {
+          type: "string",
+          format: "binary",
+          nullable: true,
+        },
+        removeAvatar: {
+          type: "string",
+          enum: ["true", "false"],
+          nullable: true,
+        },
+        name: {
+          type: "string",
+          example: "My new store name",
+          nullable: true,
+        },
+        description: {
+          type: "string",
+          example: "My new store description",
+          nullable: true,
+        },
+      },
+    },
+  })
+  @ApiOperation({
+    summary: "Changing your store information",
+  })
+  @ApiFormattedResponse(
+    HttpStatus.OK,
+  )
+  @HttpCode(HttpStatus.OK)
   @Patch("my")
   @AllowedRoles(USER_ROLE.SELLER)
+  @UseInterceptors(FileInterceptor("avatar", {
+    limits: {
+      fileSize: 1024 * 1024 * 10,
+    },
+    fileFilter: pictureFileFilter,
+  }))
   async editMy(
     @UserInfo() userInfo: AuthTokenPayload,
     @Body() dto: EditStoreInfoRequest,
-  ): Promise<StoreEditRequestResponse> {
-    const changes: ValueChange[] = [];
+    @UploadedFile() image: Express.Multer.File,
+  ): Promise<void> {
+    const changes = await this.extractStoreChanges(dto, image);
 
-    if (dto.name !== undefined) {
-      changes.push({
-        fieldName: "name",
-        type: ValueChange_OperationType.SET,
-        newValue: normalizeText(dto.name, "name"),
-      });
-    }
-
-    if (dto.description !== undefined) {
-      changes.push({
-        fieldName: "description",
-        type: dto.description ? ValueChange_OperationType.SET : ValueChange_OperationType.CLEAR,
-        newValue: dto.description ? normalizeText(dto.description, "name") : undefined,
-      });
-    }
-
-    const res = await this.client.call("editInfo", {
+    return void await this.client.call("editInfo", {
       userInfo,
       changes,
     });
-
-    return {
-      ...res,
-      createdAt: timestampToDate(res.createdAt),
-      decisionMadeAt: res.decisionMadeAt ? timestampToDate(res.decisionMadeAt) : undefined,
-      status: storeEditRequestStatusMappings.fromGrpc(res.status),
-      changes: res.changes.map(i => ({
-        fieldName: i.fieldName,
-        action: i.type === ValueChange_OperationType.CLEAR ? "CLEAR" : "SET",
-        newValue: i.newValue,
-        oldValue: i.oldValue,
-      })),
-      reviewedBy: res.reviewedBy
-        ? {
-            id: res.reviewedBy.id,
-            name: res.reviewedBy.name ?? null,
-            avatarUrl: res.reviewedBy.avatarUrl ?? null,
-          }
-        : undefined,
-    };
   }
 
+  @ApiOperation({
+    summary: "Obtaining information about a store by ID",
+  })
+  @ApiFormattedResponse(
+    HttpStatus.OK,
+    StoreInfoResponse,
+  )
+  @HttpCode(HttpStatus.OK)
   @Get(":storeId")
   @IsPublic()
   async getById(
@@ -95,13 +123,75 @@ export class StoreController {
     };
   }
 
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        avatar: {
+          type: "string",
+          format: "binary",
+          nullable: true,
+        },
+        removeAvatar: {
+          type: "string",
+          enum: ["true", "false"],
+          nullable: true,
+        },
+        name: {
+          type: "string",
+          example: "My new store name",
+          nullable: true,
+        },
+        description: {
+          type: "string",
+          example: "My new store description",
+          nullable: true,
+        },
+      },
+    },
+  })
+  @ApiOperation({
+    summary: "Changing store information without confirmation",
+  })
+  @ApiFormattedResponse(
+    HttpStatus.OK,
+    StoreInfoResponse,
+  )
+  @HttpCode(HttpStatus.OK)
   @Patch(":storeId")
   @AllowedRoles(USER_ROLE.ADMIN)
+  @UseInterceptors(FileInterceptor("avatar", {
+    limits: {
+      fileSize: 1024 * 1024 * 10,
+    },
+    fileFilter: pictureFileFilter,
+  }))
   async editInfoImmediate(
-    @Param() storeId: string,
+    @Param("storeId") storeId: string,
     @Body() dto: EditStoreInfoRequest,
     @UserInfo() userInfo: AuthTokenPayload,
+    @UploadedFile() image: Express.Multer.File,
   ): Promise<StoreInfoResponse> {
+    const changes = await this.extractStoreChanges(dto, image);
+
+    const res = await this.client.call("editInfoImmediate", {
+      userInfo,
+      changes,
+      storeId,
+    });
+
+    return {
+      ...res,
+      avatarUrl: res.avatarUrl ?? null,
+      description: res.description ?? null,
+    };
+  }
+
+  private async extractStoreChanges(
+    dto: EditStoreInfoRequest,
+    image: Express.Multer.File,
+  ): Promise<ValueChange[]> {
     const changes: ValueChange[] = [];
 
     if (dto.name !== undefined) {
@@ -113,22 +203,44 @@ export class StoreController {
     }
 
     if (dto.description !== undefined) {
+      if (dto.description === "") {
+        changes.push({
+          fieldName: "description",
+          type: ValueChange_OperationType.CLEAR,
+        });
+      } else {
+        changes.push({
+          fieldName: "description",
+          type: ValueChange_OperationType.SET,
+          newValue: dto.description,
+        });
+      }
+    }
+
+    if (dto.removeAvatar === "true") {
+      if (image)
+        throw new BadRequestException("Remove flag and file cannot be provided at the same time");
+
       changes.push({
-        fieldName: "description",
-        type: dto.description ? ValueChange_OperationType.SET : ValueChange_OperationType.CLEAR,
-        newValue: dto.description ? normalizeText(dto.description, "name") : undefined,
+        fieldName: "avatarUrl",
+        type: ValueChange_OperationType.CLEAR,
+      });
+    } else if (image) {
+      const { url: avatarUrl } = await this.mediaClient.call("uploadFile", {
+        bucket: MediaBucket.AVATAR,
+        contentType: image.mimetype,
+        filename: randomBytes(16).toString("hex"),
+        file: new Uint8Array(image.buffer),
+        resizeHeight: 512,
+        resizeWidth: 512,
+      });
+      changes.push({
+        fieldName: "avatarUrl",
+        type: ValueChange_OperationType.SET,
+        newValue: avatarUrl,
       });
     }
 
-    const res = await this.client.call("editInfoImmediate", {
-      userInfo,
-      changes,
-      storeId,
-    });
-
-    return {
-      ...res,
-      avatarUrl: res.avatarUrl ?? null,
-    };
+    return changes;
   }
 }

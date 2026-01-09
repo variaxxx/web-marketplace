@@ -2,10 +2,11 @@ import { RmqService } from "../../infra/rmq/rmq.service";
 import { UserService } from "./user.service";
 import { Controller } from "@nestjs/common";
 import { Ctx, EventPattern, GrpcMethod, Payload, RmqContext } from "@nestjs/microservices";
-import { USER_PATTERNS, UserRegisteredPayload } from "@web-marketplace/backend";
+import { USER_RMQ_PATTERN, UserRegisteredPayload } from "@web-marketplace/backend";
 import { GRPC_SERVICE_NAMES } from "@web-marketplace/contracts";
 import { EditProfilePayload, GetMePayload, GetUserInfoPayload, UserInfoResponse } from "@web-marketplace/contracts/gen/user";
 
+// TODO: findmany users
 @Controller()
 export class UserController {
   constructor(
@@ -13,7 +14,7 @@ export class UserController {
     private readonly rmq: RmqService,
   ) {}
 
-  @EventPattern(USER_PATTERNS.USER_REGISTERED)
+  @EventPattern(USER_RMQ_PATTERN.USER_REGISTERED)
   async create(
     @Payload() payload: UserRegisteredPayload,
     @Ctx() ctx: RmqContext,

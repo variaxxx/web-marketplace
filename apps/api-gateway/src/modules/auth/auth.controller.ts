@@ -4,7 +4,7 @@ import { AuthClientRmq } from "./auth.rmq";
 import { LoginRequest, RegistrationRequest, VerifyEmailRequest } from "./dto/requests";
 import { BadRequestException, Body, Controller, HttpCode, HttpStatus, Post, Req, Res } from "@nestjs/common";
 import { ApiOperation } from "@nestjs/swagger";
-import { TokensAges } from "@web-marketplace/backend";
+import { TOKEN_AGE } from "@web-marketplace/backend";
 import { Device } from "@web-marketplace/contracts/gen/auth";
 import { Request, Response } from "express";
 import { UAParser } from "ua-parser-js";
@@ -34,8 +34,8 @@ export class AuthController {
       ...dto,
     });
 
-    this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
-    this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
+    this.setTokenAsCookie(res, "accessToken", value.accessToken, TOKEN_AGE.ACCESS_TOKEN);
+    this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TOKEN_AGE.REFRESH_TOKEN);
   }
 
   @ApiOperation({ summary: "Account registration" })
@@ -69,8 +69,8 @@ export class AuthController {
       device,
     });
 
-    this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
-    this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
+    this.setTokenAsCookie(res, "accessToken", value.accessToken, TOKEN_AGE.ACCESS_TOKEN);
+    this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TOKEN_AGE.REFRESH_TOKEN);
   }
 
   @ApiOperation({ summary: "Email verification" })
@@ -91,8 +91,8 @@ export class AuthController {
       device,
     });
 
-    this.setTokenAsCookie(res, "accessToken", value.accessToken, TokensAges.accessToken);
-    this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TokensAges.refreshToken);
+    this.setTokenAsCookie(res, "accessToken", value.accessToken, TOKEN_AGE.ACCESS_TOKEN);
+    this.setTokenAsCookie(res, "refreshToken", value.refreshToken, TOKEN_AGE.REFRESH_TOKEN);
   }
 
   @ApiOperation({ summary: "Logout" })

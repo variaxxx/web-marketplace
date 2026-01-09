@@ -17,7 +17,7 @@ service SellerApplicationService {
 
 message CreateSellerApplicationPayload {
   string store_name = 1;
-  string store_description = 2;
+  optional string store_description = 2;
 
   auth.v1.UserInfo user_info = 3;
 }
@@ -61,7 +61,7 @@ message SellerApplicationInfoResponse {
   string user_id = 3;
   SellerApplicationStatus status = 4;
   string store_name = 5;
-  string store_description = 6;
+  optional string store_description = 6;
   optional google.protobuf.Timestamp decision_made_at = 7;
   optional user.v1.UserDisplayInfo reviewed_by = 8;
   optional string rejection_reason = 9;

@@ -8,8 +8,8 @@ model SellerApplication {
   status          SellerApplicationStatus @default(PENDING)
   rejectionReason String?                 @map("rejection_reason")
 
-  storeName        String @map("store_name")
-  storeDescription String @map("store_description")
+  storeName        String  @map("store_name")
+  storeDescription String? @map("store_description")
 
   userId String @map("user_id")
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade, name: "user")

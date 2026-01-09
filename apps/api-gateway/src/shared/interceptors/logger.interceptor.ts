@@ -1,5 +1,5 @@
 import { CallHandler, ExecutionContext, HttpException, Injectable, Logger, NestInterceptor } from "@nestjs/common";
-import { grpcToHttpStatus } from "@web-marketplace/backend";
+import { grpcToHttpStatusMapping } from "@web-marketplace/backend";
 import { catchError, Observable, tap, throwError } from "rxjs";
 
 @Injectable()
@@ -25,7 +25,7 @@ export class LoggerInterceptor implements NestInterceptor {
           && "code" in e
           && "details" in e
         ) {
-          Logger.error(`${request.method} ${request.originalUrl} - ${grpcToHttpStatus[e.code]} ${e.details} [IP: ${clientIp}]`);
+          Logger.error(`${request.method} ${request.originalUrl} - ${grpcToHttpStatusMapping[e.code]} ${e.details} [IP: ${clientIp}]`);
         } else {
           Logger.error(`${request.method} ${request.originalUrl} - 500 Internal server error [IP: ${clientIp}]: ${e instanceof Error ? e.stack : e}`);
         }

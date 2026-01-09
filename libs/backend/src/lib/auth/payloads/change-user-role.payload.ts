@@ -1,4 +1,4 @@
-import { USER_ROLE, UserRole } from "../constants";
+import { USER_ROLE, UserRole } from "../enums";
 import { IsIn, IsUUID } from "class-validator";
 
 export class ChangeUserRolePayload {

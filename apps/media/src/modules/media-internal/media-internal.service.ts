@@ -3,6 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { DeleteFilePayload, GRPC_ERROR_CODE, MicroserviceError } from "@web-marketplace/backend";
 import { UploadFilePayload, UploadFileResponse } from "@web-marketplace/contracts/gen/media";
 import { Buffer } from "node:buffer";
+import sharp from "sharp";
 
 @Injectable()
 export class MediaInternalService {
@@ -10,7 +11,6 @@ export class MediaInternalService {
     private readonly minio: MinioService,
   ) {}
 
-  // TODO: resize
   public async uploadFile(
     payload: UploadFilePayload,
   ): Promise<UploadFileResponse> {
@@ -20,10 +20,18 @@ export class MediaInternalService {
     if (!bucket)
       throw new MicroserviceError(GRPC_ERROR_CODE.INVALID_ARGUMENT, "Invalid bucket");
 
+    const fileBuffer = Buffer.from(file);
+    const resizedBuffer = await sharp(fileBuffer)
+      .resize(payload.resizeWidth, payload.resizeHeight, {
+        fit: "cover",
+        position: "center",
+      })
+      .toBuffer();
+
     await this.minio.upload(
       bucket,
       filename,
-      Buffer.from(file),
+      resizedBuffer,
       contentType,
     );
 

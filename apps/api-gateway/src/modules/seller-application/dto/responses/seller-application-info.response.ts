@@ -19,7 +19,7 @@ export class SellerApplicationInfoResponse implements SharedInterface {
   storeName: string;
 
   @ApiProperty({ example: "This is my store" })
-  storeDescription: string;
+  storeDescription: string | null;
 
   @ApiProperty({ example: "2026-01-03T18:18:06.000Z", nullable: true })
   decisionMadeAt?: Date;

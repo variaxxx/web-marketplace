@@ -6,7 +6,7 @@ import { AuthClientRmq } from "./auth.rmq";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ClientProvider, ClientsModule, Transport } from "@nestjs/microservices";
-import { MICROSERVICE_RMQ_QUEUE } from "@web-marketplace/backend";
+import { RMQ_QUEUE } from "@web-marketplace/backend";
 import { GRPC_PACKAGE_NAMES, PROTO_FILES_PATHS } from "@web-marketplace/contracts";
 
 @Module({
@@ -33,7 +33,7 @@ import { GRPC_PACKAGE_NAMES, PROTO_FILES_PATHS } from "@web-marketplace/contract
           transport: Transport.RMQ,
           options: {
             urls: [config.getOrThrow<string>(EnvKey.RMQ_URL)],
-            queue: MICROSERVICE_RMQ_QUEUE.AUTH_SERVICE,
+            queue: RMQ_QUEUE.AUTH_SERVICE,
             queueOptions: {
               durable: true,
             },

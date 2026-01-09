@@ -1,7 +1,7 @@
 import { GRPC_ERROR_CODE } from "../enums";
 import { HttpStatus } from "@nestjs/common";
 
-export const grpcToHttpStatus: Record<GRPC_ERROR_CODE, number | HttpStatus> = {
+export const grpcToHttpStatusMapping: Record<GRPC_ERROR_CODE, number | HttpStatus> = {
   [GRPC_ERROR_CODE.OK]: HttpStatus.OK,
   [GRPC_ERROR_CODE.CANCELLED]: 499,
   [GRPC_ERROR_CODE.UNKNOWN]: HttpStatus.INTERNAL_SERVER_ERROR,
@@ -19,5 +19,4 @@ export const grpcToHttpStatus: Record<GRPC_ERROR_CODE, number | HttpStatus> = {
   [GRPC_ERROR_CODE.UNAVAILABLE]: HttpStatus.SERVICE_UNAVAILABLE,
   [GRPC_ERROR_CODE.DATA_LOSS]: HttpStatus.INTERNAL_SERVER_ERROR,
   [GRPC_ERROR_CODE.UNAUTHENTICATED]: HttpStatus.UNAUTHORIZED,
-
 };

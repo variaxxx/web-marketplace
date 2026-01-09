@@ -12,7 +12,7 @@ model StoreEditRequest {
   reviewedBy   User?   @relation(fields: [reviewedById], references: [id], onDelete: SetNull)
 
   storeId String @map("store_id")
-  store   Store  @relation(fields: [storeId], references: [ownerId], onDelete: Cascade)
+  store   Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
 
   storeEditFieldChanges StoreEditFieldChange[]
 

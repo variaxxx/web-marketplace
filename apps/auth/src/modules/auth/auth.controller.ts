@@ -2,7 +2,7 @@ import { RmqService } from "../../infra/rmq/rmq.service";
 import { AuthService } from "./auth.service";
 import { Controller } from "@nestjs/common";
 import { Ctx, EventPattern, GrpcMethod, Payload, RmqContext } from "@nestjs/microservices";
-import { AUTH_PATTERNS, ChangeUserRolePayload, RevokeRefreshTokenPayload } from "@web-marketplace/backend";
+import { AUTH_RMQ_PATTERN, ChangeUserRolePayload, RevokeRefreshTokenPayload } from "@web-marketplace/backend";
 import { GRPC_SERVICE_NAMES } from "@web-marketplace/contracts";
 import { LoginPayload, RefreshTokenPayload, RegistrationPayload, RegistrationResponse, TokensResponse, VerifyEmailPayload } from "@web-marketplace/contracts/gen/auth";
 
@@ -41,7 +41,7 @@ export class AuthController {
     return await this.authService.verifyEmail(payload);
   }
 
-  @EventPattern(AUTH_PATTERNS.REVOKE_REFRESH_TOKEN)
+  @EventPattern(AUTH_RMQ_PATTERN.REVOKE_REFRESH_TOKEN)
   async revokeRefreshToken(
     @Payload() payload: RevokeRefreshTokenPayload,
     @Ctx() ctx: RmqContext,
@@ -54,7 +54,7 @@ export class AuthController {
     }
   }
 
-  @EventPattern(AUTH_PATTERNS.CHANGE_USER_ROLE)
+  @EventPattern(AUTH_RMQ_PATTERN.CHANGE_USER_ROLE)
   async changeUserRole(
     @Payload() payload: ChangeUserRolePayload,
     @Ctx() ctx: RmqContext,

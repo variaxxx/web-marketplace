@@ -15,12 +15,12 @@ import { UserDisplayInfo } from "./user";
 export const protobufPackage = "store.v1";
 
 export enum StoreEditRequestStatus {
-  UNSPECIFIED = "UNSPECIFIED",
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  CANCELLED = "CANCELLED",
-  UNRECOGNIZED = "UNRECOGNIZED",
+  UNSPECIFIED = 0,
+  PENDING = 1,
+  APPROVED = 2,
+  REJECTED = 3,
+  CANCELLED = 4,
+  UNRECOGNIZED = -1,
 }
 
 export interface ValueChange {
@@ -31,9 +31,9 @@ export interface ValueChange {
 }
 
 export enum ValueChange_OperationType {
-  SET = "SET",
-  CLEAR = "CLEAR",
-  UNRECOGNIZED = "UNRECOGNIZED",
+  SET = 0,
+  CLEAR = 1,
+  UNRECOGNIZED = -1,
 }
 
 export interface GetStoreInfoPayload {
@@ -56,11 +56,8 @@ export interface GetStoreEditRequestsPayload {
   ownerId?: string | undefined;
   limit?: number | undefined;
   offset?: number | undefined;
-  userInfo: UserInfo | undefined;
-}
-
-export interface CancelStoreEditPayload {
-  requestId: string;
+  status?: StoreEditRequestStatus | undefined;
+  storeId?: string | undefined;
   userInfo: UserInfo | undefined;
 }
 
@@ -71,6 +68,7 @@ export interface ApproveStoreEditPayload {
 
 export interface RejectStoreEditPayload {
   requestId: string;
+  rejectionReason?: string | undefined;
   userInfo: UserInfo | undefined;
 }
 
@@ -89,6 +87,7 @@ export interface StoreEditRequestResponse {
   changes: ValueChange[];
   decisionMadeAt?: Timestamp | undefined;
   reviewedBy?: UserDisplayInfo | undefined;
+  rejectionReason?: string | undefined;
 }
 
 export interface StoreEditRequestsResponse {
@@ -102,7 +101,7 @@ export const STORE_V1_PACKAGE_NAME = "store.v1";
 export interface StoreServiceClient {
   getInfo(request: GetStoreInfoPayload): Observable<StoreInfoResponse>;
 
-  editInfo(request: EditStoreInfoPayload): Observable<StoreEditRequestResponse>;
+  editInfo(request: EditStoreInfoPayload): Observable<Empty>;
 
   editInfoImmediate(request: EditStoreInfoPayload): Observable<StoreInfoResponse>;
 }
@@ -110,9 +109,7 @@ export interface StoreServiceClient {
 export interface StoreServiceController {
   getInfo(request: GetStoreInfoPayload): Promise<StoreInfoResponse> | Observable<StoreInfoResponse> | StoreInfoResponse;
 
-  editInfo(
-    request: EditStoreInfoPayload,
-  ): Promise<StoreEditRequestResponse> | Observable<StoreEditRequestResponse> | StoreEditRequestResponse;
+  editInfo(request: EditStoreInfoPayload): void;
 
   editInfoImmediate(
     request: EditStoreInfoPayload,
@@ -137,11 +134,9 @@ export function StoreServiceControllerMethods() {
 export const STORE_SERVICE_NAME = "StoreService";
 
 export interface StoreModerationServiceClient {
-  cancelEdit(request: CancelStoreEditPayload): Observable<StoreEditRequestResponse>;
-
   approveEdit(request: ApproveStoreEditPayload): Observable<StoreEditRequestResponse>;
 
-  rejectEdit(request: RejectStoreEditPayload): Observable<Empty>;
+  rejectEdit(request: RejectStoreEditPayload): Observable<StoreEditRequestResponse>;
 
   getEditRequest(request: GetStoreEditRequestPayload): Observable<StoreEditRequestResponse>;
 
@@ -149,15 +144,13 @@ export interface StoreModerationServiceClient {
 }
 
 export interface StoreModerationServiceController {
-  cancelEdit(
-    request: CancelStoreEditPayload,
-  ): Promise<StoreEditRequestResponse> | Observable<StoreEditRequestResponse> | StoreEditRequestResponse;
-
   approveEdit(
     request: ApproveStoreEditPayload,
   ): Promise<StoreEditRequestResponse> | Observable<StoreEditRequestResponse> | StoreEditRequestResponse;
 
-  rejectEdit(request: RejectStoreEditPayload): void;
+  rejectEdit(
+    request: RejectStoreEditPayload,
+  ): Promise<StoreEditRequestResponse> | Observable<StoreEditRequestResponse> | StoreEditRequestResponse;
 
   getEditRequest(
     request: GetStoreEditRequestPayload,
@@ -170,7 +163,7 @@ export interface StoreModerationServiceController {
 
 export function StoreModerationServiceControllerMethods() {
   return function (constructor: Function) {
-    const grpcMethods: string[] = ["cancelEdit", "approveEdit", "rejectEdit", "getEditRequest", "getEditRequests"];
+    const grpcMethods: string[] = ["approveEdit", "rejectEdit", "getEditRequest", "getEditRequests"];
     for (const method of grpcMethods) {
       const descriptor: any = Reflect.getOwnPropertyDescriptor(constructor.prototype, method);
       GrpcMethod("StoreModerationService", method)(constructor.prototype[method], method, descriptor);

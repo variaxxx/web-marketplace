@@ -4,7 +4,7 @@ import { Logger, ValidationPipe } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { MicroserviceOptions, Transport } from "@nestjs/microservices";
-import { MICROSERVICE_RMQ_QUEUE } from "@web-marketplace/backend";
+import { RMQ_QUEUE } from "@web-marketplace/backend";
 
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
@@ -25,7 +25,7 @@ async function bootstrap(): Promise<void> {
     transport: Transport.RMQ,
     options: {
       urls: [config.getOrThrow<string>(EnvKey.RMQ_URL)],
-      queue: MICROSERVICE_RMQ_QUEUE.NOTIFICATION_SERVICE,
+      queue: RMQ_QUEUE.NOTIFICATION_SERVICE,
       queueOptions: {
         durable: true,
       },

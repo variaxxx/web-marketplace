@@ -2,20 +2,13 @@ import { StoreModerationService } from "./store-moderation.service";
 import { Controller } from "@nestjs/common";
 import { GrpcMethod } from "@nestjs/microservices";
 import { GRPC_SERVICE_NAMES } from "@web-marketplace/contracts";
-import { ApproveStoreEditPayload, CancelStoreEditPayload, RejectStoreEditPayload, StoreEditRequestResponse } from "@web-marketplace/contracts/gen/store";
+import { ApproveStoreEditPayload, GetStoreEditRequestPayload, GetStoreEditRequestsPayload, RejectStoreEditPayload, StoreEditRequestResponse, StoreEditRequestsResponse } from "@web-marketplace/contracts/gen/store";
 
 @Controller()
 export class StoreModerationController {
   constructor(
     private readonly service: StoreModerationService,
   ) {}
-
-  @GrpcMethod(GRPC_SERVICE_NAMES.STORE_MODERATION_SERVICE, "CancelEdit")
-  async cancelEdit(
-    payload: CancelStoreEditPayload,
-  ): Promise<StoreEditRequestResponse> {
-    return this.service.cancelEdit(payload);
-  }
 
   @GrpcMethod(GRPC_SERVICE_NAMES.STORE_MODERATION_SERVICE, "ApproveEdit")
   async approveEdit(
@@ -29,5 +22,19 @@ export class StoreModerationController {
     payload: RejectStoreEditPayload,
   ): Promise<StoreEditRequestResponse> {
     return this.service.rejectEdit(payload);
+  }
+
+  @GrpcMethod(GRPC_SERVICE_NAMES.STORE_MODERATION_SERVICE, "GetEditRequest")
+  async getOneEditRequest(
+    payload: GetStoreEditRequestPayload,
+  ): Promise<StoreEditRequestResponse> {
+    return this.service.getEditRequest(payload);
+  }
+
+  @GrpcMethod(GRPC_SERVICE_NAMES.STORE_MODERATION_SERVICE, "GetEditRequests")
+  async getManyEditRequests(
+    payload: GetStoreEditRequestsPayload,
+  ): Promise<StoreEditRequestsResponse> {
+    return this.service.getManyEditRequests(payload);
   }
 }

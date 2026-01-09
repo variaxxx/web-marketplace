@@ -1,6 +1,6 @@
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from "@nestjs/common";
 import { ApiResponse } from "@web-marketplace/api";
-import { grpcToHttpStatus } from "@web-marketplace/backend";
+import { grpcToHttpStatusMapping } from "@web-marketplace/backend";
 
 @Catch()
 export class AllExceptionFilter implements ExceptionFilter {
@@ -16,7 +16,7 @@ export class AllExceptionFilter implements ExceptionFilter {
       && "code" in exception
       && "details" in exception
     ) {
-      status = grpcToHttpStatus[exception.code];
+      status = grpcToHttpStatusMapping[exception.code];
       message = status < 500 ? exception.details : message;
     }
 

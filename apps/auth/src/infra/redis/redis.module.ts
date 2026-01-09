@@ -11,10 +11,10 @@ import { ConfigService } from "@nestjs/config";
     CacheModule.registerAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const host = config.get<string>(EnvKey.REDIS_HOST) || "localhost";
-        const port = config.getOrThrow<string>(EnvKey.REDIS_PORT);
-        const user = config.get<string>(EnvKey.REDIS_USER);
-        const password = config.getOrThrow<string>(EnvKey.REDIS_PASSWORD);
+        const host = config.get<string>(EnvKey.AUTH_REDIS_HOST) || "localhost";
+        const port = config.getOrThrow<string>(EnvKey.AUTH_REDIS_PORT);
+        const user = config.get<string>(EnvKey.AUTH_REDIS_USER);
+        const password = config.getOrThrow<string>(EnvKey.AUTH_REDIS_PASSWORD);
         return {
           stores: [
             new KeyvRedis(`redis://${user}:${password}@${host}:${port}`),

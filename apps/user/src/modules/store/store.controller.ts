@@ -2,8 +2,9 @@ import { StoreService } from "./store.service";
 import { Controller } from "@nestjs/common";
 import { GrpcMethod } from "@nestjs/microservices";
 import { GRPC_SERVICE_NAMES } from "@web-marketplace/contracts";
-import { EditStoreInfoPayload, GetStoreInfoPayload, StoreEditRequestResponse, StoreInfoResponse } from "@web-marketplace/contracts/gen/store";
+import { EditStoreInfoPayload, GetStoreInfoPayload, StoreInfoResponse } from "@web-marketplace/contracts/gen/store";
 
+// TODO: find many stores
 @Controller()
 export class StoreController {
   constructor(
@@ -20,11 +21,11 @@ export class StoreController {
   @GrpcMethod(GRPC_SERVICE_NAMES.STORE_SERVICE, "EditInfo")
   async editInfo(
     payload: EditStoreInfoPayload,
-  ): Promise<StoreEditRequestResponse> {
+  ): Promise<void> {
     return await this.storeService.editInfo(payload);
   }
 
-  @GrpcMethod(GRPC_SERVICE_NAMES.STORE_MODERATION_SERVICE, "EditInfoImmediate")
+  @GrpcMethod(GRPC_SERVICE_NAMES.STORE_SERVICE, "EditInfoImmediate")
   async editInfoImmediate(
     payload: EditStoreInfoPayload,
   ): Promise<StoreInfoResponse> {

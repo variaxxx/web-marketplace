@@ -7,7 +7,7 @@ model Store {
   updatedAt DateTime @updatedAt() @map("updated_at")
 
   name        String
-  description String
+  description String?
   avatarUrl   String? @map("avatar_url")
 
   owner             User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)

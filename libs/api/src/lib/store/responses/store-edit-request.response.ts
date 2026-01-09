@@ -10,4 +10,5 @@ export interface StoreEditRequestResponse {
   changes: ValueChangeResponse[];
   decisionMadeAt?: Date;
   reviewedBy?: UserDisplayInfoResponse;
+  rejectionReason?: string;
 }

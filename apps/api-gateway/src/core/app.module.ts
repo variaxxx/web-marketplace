@@ -1,6 +1,7 @@
 import { AddressModule } from "../modules/address/address.module";
 import { AuthModule } from "../modules/auth/auth.module";
 import { SellerApplicationModule } from "../modules/seller-application/seller-application.module";
+import { StoreModerationModule } from "../modules/store-moderation/store-moderation.module";
 import { StoreModule } from "../modules/store/store.module";
 import { UserModule } from "../modules/user/user.module";
 import { AuthGuard } from "../shared";
@@ -19,6 +20,7 @@ import { JwtModule } from "@nestjs/jwt";
     AddressModule,
     SellerApplicationModule,
     StoreModule,
+    StoreModerationModule,
   ],
   providers: [
     {

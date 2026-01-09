@@ -1,4 +1,5 @@
 import { EnvKey } from "../../core/config/env-key.enum";
+import { MediaModule } from "../../infra/media/media.module";
 import { MICROSERVICE_CLIENT_NAMES } from "../../shared";
 import { StoreController } from "./store.controller";
 import { StoreClientGrpc } from "./store.grpc";
@@ -9,6 +10,7 @@ import { GRPC_PACKAGE_NAMES, PROTO_FILES_PATHS } from "@web-marketplace/contract
 
 @Module({
   imports: [
+    MediaModule,
     ClientsModule.registerAsync([
       {
         name: MICROSERVICE_CLIENT_NAMES.STORE_GRPC,

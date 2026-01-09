@@ -1,4 +1,4 @@
-import { SELLER_APPLICATION_STATUS, SellerApplicationStatus } from "../constants";
+import { SELLER_APPLICATION_STATUS, SellerApplicationStatus } from "../enums/seller-application-status.enum";
 import { SellerApplicationStatus as GrpcStatus } from "@web-marketplace/contracts/gen/seller-application";
 
 const STATUS_MAP = {

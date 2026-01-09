@@ -9,14 +9,13 @@ import "user.proto";
 
 service StoreService {
   rpc GetInfo (GetStoreInfoPayload) returns (StoreInfoResponse);
-  rpc EditInfo (EditStoreInfoPayload) returns (StoreEditRequestResponse);
+  rpc EditInfo (EditStoreInfoPayload) returns (google.protobuf.Empty);
   rpc EditInfoImmediate (EditStoreInfoPayload) returns (StoreInfoResponse);
 }
 
 service StoreModerationService {
-  rpc CancelEdit (CancelStoreEditPayload) returns (StoreEditRequestResponse);
   rpc ApproveEdit (ApproveStoreEditPayload) returns (StoreEditRequestResponse);
-  rpc RejectEdit (RejectStoreEditPayload) returns (google.protobuf.Empty);
+  rpc RejectEdit (RejectStoreEditPayload) returns (StoreEditRequestResponse);
 
   rpc GetEditRequest (GetStoreEditRequestPayload) returns (StoreEditRequestResponse);
   rpc GetEditRequests (GetStoreEditRequestsPayload) returns (StoreEditRequestsResponse);
@@ -58,13 +57,10 @@ message GetStoreEditRequestsPayload {
   optional string owner_id = 1;
   optional int32 limit = 2;
   optional int32 offset = 3;
+  optional StoreEditRequestStatus status = 4;
+  optional string store_id = 5;
 
-  auth.v1.UserInfo user_info = 4;
-}
-
-message CancelStoreEditPayload {
-  string request_id = 1;
-  auth.v1.UserInfo user_info = 2;
+  auth.v1.UserInfo user_info = 6;
 }
 
 message ApproveStoreEditPayload {
@@ -74,7 +70,8 @@ message ApproveStoreEditPayload {
 
 message RejectStoreEditPayload {
   string request_id = 1;
-  auth.v1.UserInfo user_info = 2;
+  optional string rejection_reason = 2;
+  auth.v1.UserInfo user_info = 3;
 }
 
 // === RESPONSES ===
@@ -94,6 +91,7 @@ message StoreEditRequestResponse {
   repeated ValueChange changes = 5;
   optional google.protobuf.Timestamp decision_made_at = 6;
   optional user.v1.UserDisplayInfo reviewed_by = 7;
+  optional string rejection_reason = 8;
 }
 
 message StoreEditRequestsResponse {

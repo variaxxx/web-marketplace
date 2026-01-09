@@ -1,24 +1,14 @@
 import { PrismaService } from "../../infra/db/prisma.service";
+import { ADDRESS_SELECT } from "./address.constants";
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/generated/userClient";
 import { dateToTimestamp, GRPC_ERROR_CODE, MicroserviceError, PrismaQueryError, USER_ROLE } from "@web-marketplace/backend";
 import { AddAddressPayload, AddressInfoResponse, DeleteAddressPayload, EditAddressPayload, FindManyAddressesPayload, FindManyAddressesResponse, FindOneAddressPayload } from "@web-marketplace/contracts/gen/address";
 
-const addressSelect = {
-  id: true,
-  createdAt: true,
-  city: true,
-  street: true,
-  house: true,
-  latitude: true,
-  longitude: true,
-  label: true,
-};
-
 @Injectable()
 export class AddressService {
   private toResponse(
-    address: Prisma.AddressGetPayload<{ select: typeof addressSelect }>,
+    address: Prisma.AddressGetPayload<{ select: typeof ADDRESS_SELECT }>,
   ): AddressInfoResponse {
     return {
       ...address,
@@ -45,7 +35,7 @@ export class AddressService {
         longitude: payload.longitude,
         label: payload.label,
       },
-      select: addressSelect,
+      select: ADDRESS_SELECT,
     });
 
     return this.toResponse(address);
@@ -69,7 +59,7 @@ export class AddressService {
         longitude: payload.longitude,
         label: payload.label,
       },
-      select: addressSelect,
+      select: ADDRESS_SELECT,
     }).catch((e) => {
       if (e.code === PrismaQueryError.RecordsNotFound)
         throw new MicroserviceError(GRPC_ERROR_CODE.NOT_FOUND, "Address not found");
@@ -89,7 +79,7 @@ export class AddressService {
         isDeleted: false,
       },
       data: { isDeleted: true },
-      select: addressSelect,
+      select: ADDRESS_SELECT,
     }).catch((e) => {
       if (e.code === PrismaQueryError.RecordsNotFound)
         throw new MicroserviceError(GRPC_ERROR_CODE.NOT_FOUND, "Address not found");
@@ -105,7 +95,7 @@ export class AddressService {
     const address = await this.prisma.address.findUnique({
       where: { id: payload.addressId },
       select: {
-        ...addressSelect,
+        ...ADDRESS_SELECT,
         userId: true,
         isDeleted: true,
       },
@@ -122,6 +112,7 @@ export class AddressService {
     return this.toResponse(address);
   }
 
+  // TODO: order
   async findMany(
     payload: FindManyAddressesPayload,
   ): Promise<FindManyAddressesResponse> {
@@ -134,7 +125,7 @@ export class AddressService {
       this.prisma.address.count({ where }),
       this.prisma.address.findMany({
         where,
-        select: addressSelect,
+        select: ADDRESS_SELECT,
         skip: payload.offset ? Math.max(payload.limit, 0) : 0,
         take: payload.limit ? Math.min(20, Math.max(payload.limit, 0)) : 20,
         orderBy: { createdAt: "desc" },

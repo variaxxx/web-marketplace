@@ -1,6 +1,7 @@
 import { MinioService } from "../../infra/minio/minio.service";
 import { Controller, Get, NotFoundException, Req, Res } from "@nestjs/common";
 import { Request, Response } from "express";
+import { InvalidBucketNameError } from "minio";
 
 @Controller()
 export class MediaPublicController {
@@ -18,6 +19,8 @@ export class MediaPublicController {
 
     const stream = await this.minio.getStream(bucketName, filename).catch((e) => {
       if (e.code === "NoSuchKey") {
+        throw new NotFoundException("Not found");
+      } else if (e.code === "NoSuchBucket" || e instanceof InvalidBucketNameError) {
         throw new NotFoundException("Not found");
       }
       throw e;

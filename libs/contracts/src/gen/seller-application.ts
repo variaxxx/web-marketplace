@@ -14,17 +14,17 @@ import { UserDisplayInfo } from "./user";
 export const protobufPackage = "seller_application.v1";
 
 export enum SellerApplicationStatus {
-  UNSPECIFIED = "UNSPECIFIED",
-  PENDING = "PENDING",
-  APPROVED = "APPROVED",
-  REJECTED = "REJECTED",
-  CANCELLED = "CANCELLED",
-  UNRECOGNIZED = "UNRECOGNIZED",
+  UNSPECIFIED = 0,
+  PENDING = 1,
+  APPROVED = 2,
+  REJECTED = 3,
+  CANCELLED = 4,
+  UNRECOGNIZED = -1,
 }
 
 export interface CreateSellerApplicationPayload {
   storeName: string;
-  storeDescription: string;
+  storeDescription?: string | undefined;
   userInfo: UserInfo | undefined;
 }
 
@@ -62,7 +62,7 @@ export interface SellerApplicationInfoResponse {
   userId: string;
   status: SellerApplicationStatus;
   storeName: string;
-  storeDescription: string;
+  storeDescription?: string | undefined;
   decisionMadeAt?: Timestamp | undefined;
   reviewedBy?: UserDisplayInfo | undefined;
   rejectionReason?: string | undefined;

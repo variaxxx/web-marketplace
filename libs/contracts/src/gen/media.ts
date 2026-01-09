@@ -11,11 +11,11 @@ import { Observable } from "rxjs";
 export const protobufPackage = "media.v1";
 
 export enum MediaBucket {
-  AVATAR = "AVATAR",
-  REVIEW = "REVIEW",
-  MESSAGE = "MESSAGE",
-  PRODUCT = "PRODUCT",
-  UNRECOGNIZED = "UNRECOGNIZED",
+  AVATAR = 0,
+  REVIEW = 1,
+  MESSAGE = 2,
+  PRODUCT = 3,
+  UNRECOGNIZED = -1,
 }
 
 export interface UploadFilePayload {

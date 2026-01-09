@@ -24,19 +24,27 @@ export class MinioService implements OnModuleInit {
   };
 
   async onModuleInit(): Promise<void> {
-    this.client = new Client({
-      endPoint: this.config.get<string>(EnvKey.MINIO_ENDPOINT) || "localhost",
-      port: this.config.getOrThrow<number>(EnvKey.MINIO_PORT),
-      accessKey: this.config.getOrThrow<string>(EnvKey.MINIO_ACCESS_KEY),
-      secretKey: this.config.getOrThrow<string>(EnvKey.MINIO_SECRET_KEY),
-      useSSL: false,
-    });
+    while (true) {
+      try {
+        this.client = new Client({
+          endPoint: this.config.get<string>(EnvKey.MINIO_ENDPOINT) || "localhost",
+          port: this.config.getOrThrow<number>(EnvKey.MINIO_PORT),
+          accessKey: this.config.getOrThrow<string>(EnvKey.MINIO_ACCESS_KEY),
+          secretKey: this.config.getOrThrow<string>(EnvKey.MINIO_SECRET_KEY),
+          useSSL: false,
+        });
 
-    for (const bucket of Object.values(this.bucketsMap).filter(Boolean)) {
-      await this.createBucket(bucket);
+        for (const bucket of Object.values(this.bucketsMap).filter(Boolean)) {
+          await this.createBucket(bucket);
+        }
+
+        this.logger.log("Minio client initialized");
+        break;
+      } catch (e) {
+        this.logger.error(`Minio connection failed, retrying...: ${e instanceof Error ? e.stack : e}`);
+        await new Promise(res => setTimeout(res, 2000));
+      }
     }
-
-    this.logger.log("Minio client initialized");
   }
 
   async upload(

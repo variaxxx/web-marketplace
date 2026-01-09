@@ -5,7 +5,7 @@ import { AuthService } from "./auth.service";
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { ClientProvider, ClientsModule, Transport } from "@nestjs/microservices";
-import { MICROSERVICE_RMQ_QUEUE } from "@web-marketplace/backend";
+import { RMQ_QUEUE } from "@web-marketplace/backend";
 
 @Module({
   imports: [
@@ -19,7 +19,7 @@ import { MICROSERVICE_RMQ_QUEUE } from "@web-marketplace/backend";
             transport: Transport.RMQ,
             options: {
               urls: [config.getOrThrow<string>(EnvKey.RMQ_URL)],
-              queue: MICROSERVICE_RMQ_QUEUE.NOTIFICATION_SERVICE,
+              queue: RMQ_QUEUE.NOTIFICATION_SERVICE,
               queueOptions: {
                 durable: true,
               },
@@ -36,7 +36,7 @@ import { MICROSERVICE_RMQ_QUEUE } from "@web-marketplace/backend";
             transport: Transport.RMQ,
             options: {
               urls: [config.getOrThrow<string>(EnvKey.RMQ_URL)],
-              queue: MICROSERVICE_RMQ_QUEUE.USER_SERVICE,
+              queue: RMQ_QUEUE.USER_SERVICE,
               queueOptions: {
                 durable: true,
               },

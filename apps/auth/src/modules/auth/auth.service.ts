@@ -6,12 +6,11 @@ import { Inject, Injectable } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { ClientProxy } from "@nestjs/microservices";
-import { AuthTokenPayload, ChangeUserRolePayload, GRPC_ERROR_CODE, MAIL_PATTERNS, MicroserviceError, MS_IN_MIN, normalizeText, PrismaQueryError, RevokeRefreshTokenPayload, SendEmailVerificationPayload, TokensAges, USER_PATTERNS, USER_ROLE, USER_STATUS, UserRegisteredPayload } from "@web-marketplace/backend";
+import { AuthTokenPayload, ChangeUserRolePayload, GRPC_ERROR_CODE, MAIL_RMQ_PATTERN, MicroserviceError, MS_IN_MIN, normalizeText, PrismaQueryError, RevokeRefreshTokenPayload, SendEmailVerificationPayload, TOKEN_AGE, USER_RMQ_PATTERN, USER_ROLE, USER_STATUS, UserRegisteredPayload } from "@web-marketplace/backend";
 import { Device, LoginPayload, RefreshTokenPayload, RegistrationPayload, RegistrationResponse, TokensResponse, VerifyEmailPayload } from "@web-marketplace/contracts/gen/auth";
 import * as argon from "argon2";
 import crypto, { createHash } from "node:crypto";
 
-// TODO: fix parallel registrations
 @Injectable()
 export class AuthService {
   constructor(
@@ -60,7 +59,7 @@ export class AuthService {
       throw e;
     });
 
-    this.userClient.emit(USER_PATTERNS.USER_REGISTERED, {
+    this.userClient.emit(USER_RMQ_PATTERN.USER_REGISTERED, {
       id: user.id,
     } as UserRegisteredPayload);
 
@@ -162,31 +161,16 @@ export class AuthService {
       });
     });
 
-    // await this.prisma.user.upsert({
-    //   where: { email, status: USER_STATUS.INACTIVE },
-    //   create: {
-    //     email,
-    //     passwordHash: hashedPassword,
-    //     role: USER_ROLE.USER,
-    //     status: USER_STATUS.INACTIVE,
-    //   },
-    //   update: {
-    //     passwordHash: hashedPassword,
-    //     role: USER_ROLE.USER,
-    //   },
-    // }).catch((e) => {
-    //   if (e.code === PrismaQueryError.UniqueConstraintViolation) {
-    //     throw new MicroserviceError(GRPC_ERROR_CODE.ALREADY_EXISTS, "Client already exists");
-    //   }
-    //   throw e;
-    // });
+    const storedHash = await this.redis.get(`otp:${email}`);
+    if (storedHash)
+      throw new MicroserviceError(GRPC_ERROR_CODE.ALREADY_EXISTS, "Unable to register now, please try again later");
 
     const code = crypto.randomInt(100000, 999999);
     const codeHash = createHash("sha256").update(code.toString()).digest("hex");
 
     await this.redis.set(`otp:${email}`, codeHash, MS_IN_MIN * 3);
 
-    this.mailClient.emit(MAIL_PATTERNS.SEND_EMAIL_VERIFICATION, {
+    this.mailClient.emit(MAIL_RMQ_PATTERN.SEND_EMAIL_VERIFICATION, {
       recipient: email,
       code,
     } as SendEmailVerificationPayload);
@@ -255,14 +239,14 @@ export class AuthService {
         userData,
         {
           secret: this.configService.getOrThrow<string>(EnvKey.ACCESS_JWT_SECRET),
-          expiresIn: TokensAges.accessToken,
+          expiresIn: TOKEN_AGE.ACCESS_TOKEN,
         },
       ),
       this.jwtService.signAsync(
         userData,
         {
           secret: this.configService.getOrThrow<string>(EnvKey.REFRESH_JWT_SECRET),
-          expiresIn: TokensAges.refreshToken,
+          expiresIn: TOKEN_AGE.REFRESH_TOKEN,
         },
       ),
     ]);

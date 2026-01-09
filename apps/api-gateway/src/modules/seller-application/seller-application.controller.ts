@@ -24,6 +24,7 @@ export class SellerApplicationController {
             avatarUrl: app.reviewedBy.avatarUrl ?? null,
           }
         : undefined,
+      storeDescription: app.storeDescription ?? null,
     };
   }
 

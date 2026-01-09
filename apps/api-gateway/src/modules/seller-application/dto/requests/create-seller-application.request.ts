@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { CreateSellerApplicationRequest as SharedInterface } from "@web-marketplace/api";
-import { IsString, MaxLength, MinLength } from "class-validator";
+import { IsOptional, IsString, MaxLength, MinLength } from "class-validator";
 
 export class CreateSellerApplicationRequest implements SharedInterface {
   @ApiProperty({ example: "MyStore" })
@@ -12,5 +12,6 @@ export class CreateSellerApplicationRequest implements SharedInterface {
   @ApiProperty({ example: "This is my store" })
   @IsString()
   @MaxLength(256)
-  storeDescription: string;
+  @IsOptional()
+  storeDescription?: string;
 }

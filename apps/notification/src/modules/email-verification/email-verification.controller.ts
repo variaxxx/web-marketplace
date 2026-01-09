@@ -2,7 +2,7 @@ import { RmqService } from "../../infra/rmq/rmq.service";
 import { EmailVerificationService } from "./email-verification.service";
 import { Controller } from "@nestjs/common";
 import { Ctx, EventPattern, Payload, RmqContext } from "@nestjs/microservices";
-import { MAIL_PATTERNS, SendEmailVerificationPayload } from "@web-marketplace/backend";
+import { MAIL_RMQ_PATTERN, SendEmailVerificationPayload } from "@web-marketplace/backend";
 
 @Controller()
 export class EmailVerificationController {
@@ -11,7 +11,7 @@ export class EmailVerificationController {
     private readonly rmq: RmqService,
   ) {}
 
-  @EventPattern(MAIL_PATTERNS.SEND_EMAIL_VERIFICATION)
+  @EventPattern(MAIL_RMQ_PATTERN.SEND_EMAIL_VERIFICATION)
   async sendVerification(
     @Payload() payload: SendEmailVerificationPayload,
     @Ctx() ctx: RmqContext,
