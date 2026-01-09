@@ -4,7 +4,7 @@ import { SELLER_APPLICATION_SELECT } from "./seller-application.constants";
 import { Inject, Injectable } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { Prisma } from "@prisma/generated/userClient";
-import { AUTH_RMQ_PATTERN, ChangeUserRolePayload, dateToTimestamp, GRPC_ERROR_CODE, MicroserviceError, PrismaQueryError, SELLER_APPLICATION_STATUS, sellerApplicationStatusMappings, sortOrderMappings, USER_ROLE } from "@web-marketplace/backend";
+import { AUTH_RMQ_PATTERN, ChangeUserRolePayload, dateToTimestamp, GRPC_ERROR_CODE, MAIL_RMQ_PATTERN, MicroserviceError, PrismaQueryError, SELLER_APPLICATION_STATUS, SellerApplicationReviewedPayload, sellerApplicationStatusMappings, sortOrderMappings, USER_ROLE } from "@web-marketplace/backend";
 import { ApproveSellerApplicationPayload, CancelSellerApplicationPayload, CreateSellerApplicationPayload, FindManySellerApplicationsPayload, FindManySellerApplicationsResponse, FindOneSellerApplicationPayload, RejectSellerApplicationPayload, SellerApplicationInfoResponse } from "@web-marketplace/contracts/gen/seller-application";
 import { firstValueFrom } from "rxjs";
 
@@ -33,6 +33,7 @@ export class SellerApplicationService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(MICROSERVICE_CLIENT_NAMES.AUTH_RMQ) private readonly authClient: ClientProxy,
+    @Inject(MICROSERVICE_CLIENT_NAMES.NOTIFICATION_RMQ) private readonly notificationClient: ClientProxy,
   ) {}
 
   async create(
@@ -75,7 +76,10 @@ export class SellerApplicationService {
           reviewedById: payload.userInfo.userId,
           decisionMadeAt: new Date(),
         },
-        select: SELLER_APPLICATION_SELECT,
+        select: {
+          ...SELLER_APPLICATION_SELECT,
+          user: { select: { email: true } },
+        },
       });
 
       await tx.store.create({
@@ -95,12 +99,20 @@ export class SellerApplicationService {
       throw e;
     });
 
-    // TODO: email notification
-
-    await firstValueFrom(this.authClient.emit(AUTH_RMQ_PATTERN.CHANGE_USER_ROLE, {
-      userId: application.userId,
-      role: USER_ROLE.SELLER,
-    } as ChangeUserRolePayload));
+    await Promise.all([
+      firstValueFrom(this.authClient.emit(AUTH_RMQ_PATTERN.CHANGE_USER_ROLE, {
+        userId: application.userId,
+        role: USER_ROLE.SELLER,
+      } as ChangeUserRolePayload)),
+      firstValueFrom(this.notificationClient.emit(MAIL_RMQ_PATTERN.SELLER_APPLICATION_REVIEWED, {
+        userEmail: application.user.email,
+        applicationId: application.id,
+        storeName: application.storeName,
+        decisionMadeAt: application.decisionMadeAt,
+        rejectionReason: application.rejectionReason,
+        isApproved: true,
+      } as SellerApplicationReviewedPayload)),
+    ]);
 
     return this.toResponse(application, payload.userInfo.role);
   }
@@ -141,14 +153,24 @@ export class SellerApplicationService {
         decisionMadeAt: new Date(),
         reviewedById: payload.userInfo.userId,
       },
-      select: SELLER_APPLICATION_SELECT,
+      select: {
+        ...SELLER_APPLICATION_SELECT,
+        user: { select: { email: true } },
+      },
     }).catch((e) => {
       if (e.code === PrismaQueryError.RecordsNotFound)
         throw new MicroserviceError(GRPC_ERROR_CODE.NOT_FOUND, "Application not found");
       throw e;
     });
 
-    // TODO: email notification
+    await firstValueFrom(this.notificationClient.emit(MAIL_RMQ_PATTERN.SELLER_APPLICATION_REVIEWED, {
+      userEmail: application.user.email,
+      applicationId: application.id,
+      decisionMadeAt: application.decisionMadeAt,
+      storeName: application.storeName,
+      rejectionReason: application.rejectionReason,
+      isApproved: false,
+    } as SellerApplicationReviewedPayload));
 
     return this.toResponse(application, payload.userInfo.role);
   }

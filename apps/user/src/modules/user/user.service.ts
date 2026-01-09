@@ -18,6 +18,7 @@ export class UserService {
       await this.prisma.user.create({
         data: {
           id: payload.id,
+          email: payload.email,
         },
       });
     } catch (e) {

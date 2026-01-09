@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Seller Application Status Update</title>
+  <style>
+    .container {
+      margin: 0 auto;
+      width: 100%;
+      max-width: 600px;
+      padding: 20px;
+      line-height: 1.6;
+      font-family: 'Courier New', Courier, monospace;
+      color: #333;
+      background-color: #f9f9f9;
+    }
+
+    .header {
+      font-size: 24px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #eee;
+    }
+
+    .details {
+      background-color: white;
+      padding: 15px;
+      margin: 20px 0;
+    }
+
+    .details strong {
+      color: #2c3e50;
+    }
+
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      font-size: 12px;
+      color: #7f8c8d;
+      text-align: center;
+    }
+
+    .rejection-reason {
+      padding: 15px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      Seller Application Status Update
+    </div>
+
+    <p>Your seller application for store <strong>{{ storeName }}</strong> has been reviewed by our administration team:</p>
+
+    <h2 style="text-align: center; margin: 15px 0;">
+      {{#if isApproved}}
+        ✅ Application Approved!
+      {{else}}
+        ❌ Application Rejected
+      {{/if}}
+    </h2>
+
+    {{#if rejectionReason}}
+    <div class="rejection-reason">
+      <strong>Reason for rejection:</strong><br />
+      {{ rejectionReason }}
+    </div>
+    {{/if}}
+
+    <div class="details">
+      <p><strong>Application ID:</strong> {{ applicationId }}</p>
+      <p><strong>Store Name:</strong> {{ storeName }}</p>
+      <p><strong>Review Date:</strong> {{ reviewDate }}</p>
+    </div>
+
+    <div class="footer">
+      &copy; {{ currentYear }} WebMarketplace. All rights reserved.<br />
+      This is an automated message, please do not reply to this email.
+    </div>
+  </div>
+</body>
+</html>

@@ -51,6 +51,7 @@ export class AuthService {
       select: {
         id: true,
         role: true,
+        email: true,
       },
     }).catch((e) => {
       if (e.code === PrismaQueryError.RecordsNotFound) {
@@ -61,6 +62,7 @@ export class AuthService {
 
     this.userClient.emit(USER_RMQ_PATTERN.USER_REGISTERED, {
       id: user.id,
+      email: user.email,
     } as UserRegisteredPayload);
 
     await this.redis.del(`otp:${email}`);

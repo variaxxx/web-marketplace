@@ -27,6 +27,23 @@ import { ClientProvider, ClientsModule, Transport } from "@nestjs/microservices"
           };
         },
       },
+      {
+        name: MICROSERVICE_CLIENT_NAMES.NOTIFICATION_RMQ,
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService): Promise<ClientProvider> | ClientProvider => {
+          return {
+            transport: Transport.RMQ,
+            options: {
+              urls: [config.getOrThrow<string>(EnvKey.RMQ_URL)],
+              queue: RMQ_QUEUE.NOTIFICATION_SERVICE,
+              queueOptions: {
+                durable: true,
+              },
+            },
+          };
+        },
+      },
     ]),
   ],
   controllers: [SellerApplicationController],
